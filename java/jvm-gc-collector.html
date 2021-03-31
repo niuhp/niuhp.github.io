@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--css-->
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+<link rel="stylesheet" href="/css/common.css">
+
+
+    <!--js-->
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.slim.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+    
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?437810b3fbae9cd37993dfef1d0b24d3";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+  
+  <title>
+      Java 垃圾回收 - 垃圾收集器
+  </title>
+
+  
+    <link rel="icon" href="https://s.niuhp.com/blog/theme/329620302.gif">
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-expand-lg theme-nav">
+    
+        <a class="navbar-brand" href="/">首页</a>
+    
+        <a class="navbar-brand" href="/archives">归档</a>
+    
+</nav>
+
+
+  <div class="container theme-main">
+      <div class="row">
+          <div class="col-9 theme-content">
+              <article id="post-java/jvm-gc-collector" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+     <h1 class="font-weight-bold article-title">Java 垃圾回收 - 垃圾收集器</h1>
+  </header>
+
+  <div class="article-meta">
+    <span class="article-date">2021-03-31</span>
+    
+        <span class="article-author">niuhp</span>
+    
+    
+       <span class="article-category">
+       <a class="article-category-link" href="/categories/Java/">Java</a>
+       </span>
+    
+    
+<span title="评论数">
+    <a href="#SOHUCS">
+        <i class="fa fa-comment-o" aria-hidden="true"></i>
+        <span id = "changyan_count_unit">0</span>
+        <script id="cy_cmt_num" src="https://s.niuhp.com/blog/theme/changyan.plugins.count.js"></script>
+    </a>
+</span>
+
+    
+
+<img id="article-qr-icon" class="article-qr-icon" src="https://s.niuhp.com/blog/theme/qr-site.png" />
+<script src="https://s.niuhp.com/blog/theme/kjua.min.js"></script>
+
+<script>
+var qrImg = kjua({ecLevel: 'H',text:'https://www.niuhp.com/java/jvm-gc-collector.html'});
+var titleStr="<div class='article-qr-prompt'>扫一扫，直接在手机上打开</div><img class='article-qr-img' src='"+$(qrImg).attr('src')+"'/>";
+$("#article-qr-icon").tooltip({
+"html":true,
+"title":titleStr
+});
+</script>
+
+
+
+  </div>
+  <div class="article-inner">
+    <div class="article-entry" itemprop="articleBody">
+        <p>Java 虚拟机规范中对垃圾收集器应该如何实现并没有任何规定，因此不同的厂商、不同版本的虚拟机所提供的垃圾收集器都可能会有很大差别，并且一般都会提供参数供用户根据自己的应用特点和要求组合出各个年代所使用的收集器。下面是 JDK 1.7 Update 14之后的 HotSpot 虚拟机包含的所有收集器：                                      </p>
+<span id="more"></span>  
+
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector.png">  </p>
+<p>上图中，如果两个收集器之间存在连线，就说明它们可以搭配使用。虚拟机所处的区域，则表示它是属于新生代收集器还是老年代收集器。  </p>
+<p>另外，我们需要先明确一个观点：虽然我们是在对各个收集器进行比较，但并非为了挑选出一个最好的收集器。因为直到现在为止还没有最好的收集器出现，更加没有万能的收集器，所以我们选择的只是对具体应用最合适的收集器。这点不需要多加解释就能证明：如果有一种放之四海皆准、任何场景下都适用的完美收集器存在，那 HotSpot 虚拟机就没必要实现那么多不同的收集器了。  </p>
+<h3 id="1-Serial-收集器"><a href="#1-Serial-收集器" class="headerlink" title="1. Serial 收集器"></a>1. Serial 收集器</h3><p>Serial 收集器是最基本、发展历史最悠久的收集器，它是一个单线程的收集器，但它的“单线程”的意义并不仅仅说明它只会使用一个 CPU 或一条收集线程去完成垃圾收集工作，更重要的是在它进行垃圾收集时，必须暂停其他所有的工作线程（Stop The World），直到它收集结束。下图示意了 Serial/Serial Old 收集器的运行过程。  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-serial.png">  </p>
+<p>从 JDK 1.3 开始，一直到现在最新的 JDK 1.7，HotSpot 虚拟机开发团队为消除或者减少工作线程因内存回收而导致停顿的努力一直在进行着，从 Serial 收集器到 Parallel 收集器，再到Concurrent Mark Sweep（CMS）乃至 GC 收集器的最前沿成果 Garbage First（G1）收集器，我们看到了一个个越来越优秀（也越来越复杂）的收集器的出现，用户线程的停顿时间在不断缩短，但是仍然没有办法完全消除（暂不包括 RTSJ 中的收集器）。寻找更优秀的垃圾收集器的工作仍在继续！  </p>
+<p>然而，Serial 收集器并非一个“老而无用、食之无味弃之可惜”的鸡肋了，但实际上到现在为止，它依然是虚拟机运行在 Client 模式下的默认新生代收集器。它也有着优于其他收集器的地方：简单而高效（与其他收集器的单线程比），对于限定单个 CPU 的环境来说，Serial 收集器由于没有线程交互的开销，专心做垃圾收集自然可以获得最高的单线程收集效率。在用户的桌面应用场景中，分配给虚拟机管理的内存一般来说不会很大，收集几十兆甚至一两百兆的新生代（仅仅是新生代使用的内存，桌面应用基本上不会再大了），停顿时间完全可以控制在几十毫秒最多一百多毫秒以内，只要不是频繁发生，这点停顿是可以接受的。所以，Serial 收集器对于运行在 Client 模式下的虚拟机来说是一个很好的选择。  </p>
+<h3 id="2-ParNew-收集器"><a href="#2-ParNew-收集器" class="headerlink" title="2. ParNew 收集器"></a>2. ParNew 收集器</h3><p>ParNew收 集器其实就是 Serial 收集器的多线程版本，除了使用多条线程进行垃圾收集之外，其余行为包括 Serial 收集器可用的所有控制参数（例如：<code>-XX：SurvivorRatio</code>、<code>-XX：PretenureSizeThreshold</code>、<code>-XX：HandlePromotionFailure</code> 等）、收集算法、Stop The World、对象分配规则、回收策略等都与 Serial 收集器完全一样，在实现上，这两种收集器也共用了相当多的代码。ParNew 收集器的工作过程如下所示：  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-parnew.png">  </p>
+<p>ParNew 收集器除了多线程收集之外，其他与 Serial 收集器相比并没有太多创新之处，但它却是许多运行在 Server 模式下的虚拟机中首选的新生代收集器，目前只有它和 Serial 收集器能与 CMS 收集器配合工作。因此，在使用 CMS 来收集老年代的时候，新生代只能选择 ParNew 或者 Serial 收集器中的一个。ParNew 收集器也是使用 <code>-XX：+UseConcMarkSweepGC</code> 选项后的默认新生代收集器，也可以使用 <code>-XX：+UseParNewGC</code> 选项来强制指定它。  </p>
+<p>ParNew 收集器在单 CPU 的环境中绝对不会有比 Serial 收集器更好的效果，甚至由于存在线程交互的开销，该收集器在通过超线程技术实现的两个 CPU 的环境中都不能百分之百地保证可以超越 Serial 收集器。当然，随着可以使用的 CPU 的数量的增加，它对于 GC 时系统资源的有效利用还是很有好处的。它默认开启的收集线程数与 CPU 的数量相同，在 CPU 非常多（譬如 32 个，现在 CPU 动辄就 4 核加超线程，服务器超过 32 个逻辑 CPU 的情况越来越多了）的环境下，可以使用 <code>-XX：ParallelGCThreads</code> 参数来限制垃圾收集的线程数。  </p>
+<p>从 ParNew 收集器开始，我们需要先学习两个名词：并发和并行。  </p>
+<ol>
+<li>并行（Parallel）：指多条垃圾收集线程并行工作，但此时用户线程仍然处于等待状态。</li>
+<li>并发（Concurrent）：指用户线程与垃圾收集线程同时执行（但不一定是并行的，可能会交替执行），用户程序在继续运行，而垃圾收集程序运行于另一个CPU上。  </li>
+</ol>
+<h3 id="3-Parallel-Scavenge-收集器"><a href="#3-Parallel-Scavenge-收集器" class="headerlink" title="3. Parallel Scavenge 收集器"></a>3. Parallel Scavenge 收集器</h3><p>Parallel Scavenge 收集器是一个新生代收集器，它也是使用复制算法的收集器，又是并行的多线程收集器……看上去和 ParNew 都一样，其特点是它的关注点与其他收集器不同：  </p>
+<ol>
+<li>CMS 等收集器的关注点是尽可能地缩短垃圾收集时用户线程的停顿时间</li>
+<li>Parallel Scavenge 收集器的目标则是达到一个可控制的吞吐量（Throughput）。所谓吞吐量就是 CPU 用于运行用户代码的时间与 CPU 总消耗时间的比值，即吞吐量=运行用户代码时间/（运行用户代码时间+垃圾收集时间），虚拟机总共运行了 100 分钟，其中垃圾收集花掉 1 分钟，那吞吐量就是 99%。  </li>
+</ol>
+<p>停顿时间越短就越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用 CPU 时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。  </p>
+<p>Parallel Scavenge 收集器提供了以下两个参数用于精确控制吞吐量：  </p>
+<ol>
+<li><code>-XX：MaxGCPauseMillis</code> 控制最大垃圾收集停顿时间。该参数允许的值是一个大于 0 的毫秒数，收集器将尽可能地保证内存回收花费的时间不超过设定值。不过并非把这个参数的值设置得稍小一点就能使得系统的垃圾收集速度变得更快，GC 停顿时间缩短是以牺牲吞吐量和新生代空间来换取的：系统把新生代调小一些，收集 300MB 新生代肯定比收集 500MB 快吧，这也直接导致垃圾收集发生得更频繁一些，原来 10 秒收集一次、每次停顿 100 毫秒，现在变成 5 秒收集一次、每次停顿 70 毫秒。停顿时间的确在下降，但吞吐量也降下来了。</li>
+<li><code>-XX：GCTimeRatio</code> 设置吞吐量大小。该参数的值应当是一个大于 0 且小于 100 的整数，就是运行用户代码时间与垃圾收集时间的比值，如果设置值为 k，则 吞吐量 = k/(k+1)，如果把此参数设置为 19，那允许的最大 GC 时间就占总时间的 5%（即1/（1+19）），默认值为 99，就是允许最大 1%（即1/（1+99））的垃圾收集时间。  </li>
+</ol>
+<p>由于与吞吐量关系密切，Parallel Scavenge 收集器也经常称为“吞吐量优先”收集器。除上述两个参数之外，Parallel Scavenge 收集器还有一个参数 <code>-XX：+UseAdaptiveSizePolicy</code> 值得关注。这是一个开关参数，当这个参数打开之后，就不需要手工指定新生代的大小（<code>-Xmn</code>）、Eden 与Survivor 区的比例（<code>-XX：SurvivorRatio</code>）、晋升老年代对象年龄（<code>-XX：PretenureSizeThreshold</code>）等细节参数了，虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数以提供最合适的停顿时间或者最大的吞吐量，这种调节方式称为 GC 自适应的调节策略（GC Ergonomics）。如果我们对于收集器运作原来不太了解，手工优化存在困难的时候，使用 Parallel Scavenge 收集器配合自适应调节策略，把内存管理的调优任务交给虚拟机去完成将是一个不错的选择。只需要把基本的内存数据设置好（如 <code>-Xmx</code> 设置最大堆），然后使用 <code>MaxGCPauseMillis</code> 参数（更关注最大停顿时间）或 <code>GCTimeRatio</code>（更关注吞吐量）参数给虚拟机设立一个优化目标，那具体细节参数的调节工作就由虚拟机完成了。自适应调节策略也是 Parallel Scavenge 收集器与 ParNew 收集器的一个重要区别。  </p>
+<h3 id="4-Serial-Old-收集器"><a href="#4-Serial-Old-收集器" class="headerlink" title="4. Serial Old 收集器"></a>4. Serial Old 收集器</h3><p>Serial Old 是 Serial 收集器的老年代版本，它同样是一个单线程收集器，使用“标记-整理”算法。这个收集器的主要意义也是在于给 Client 模式下的虚拟机使用。如果在 Server 模式下，那么它主要还有两大用途：  </p>
+<ol>
+<li>在 JDK 1.5 以及之前的版本中与 Parallel Scavenge 收集器搭配使用</li>
+<li>作为 CMS 收集器的后备预案，在并发收集发生 Concurrent Mode Failure 时使用  </li>
+</ol>
+<p>Serial Old 收集器的工作过程如下所示：  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-serial-old.png">  </p>
+<p>另外，Parallel Scavenge 收集器架构中本身有 PS MarkSweep 收集器来进行老年代收集，并非直接使用了 Serial Old 收集器，但是这个 PS MarkSweep 收集器与 Serial Old 的实现非常接近。  </p>
+<h3 id="5-Parallel-Old-收集器"><a href="#5-Parallel-Old-收集器" class="headerlink" title="5. Parallel Old 收集器"></a>5. Parallel Old 收集器</h3><p>Parallel Old 是 Parallel Scavenge 收集器的老年代版本，使用多线程和“标记-整理”算法。它是在 JDK 1.6 中才开始提供的，在此之前，新生代的 Parallel Scavenge 收集器一直处于比较尴尬的状态。因为如果新生代选择了 Parallel  Scavenge 收集器，老年代只能选择Serial Old（PS MarkSweep）收集器。由于老年代 Serial  Old 收集器在服务端应用性能上的“拖累”，使用了 Parallel Scavenge 收集器也未必能在整体应用上获得吞吐量最大化的效果，由于单线程的老年代收集中无法充分利用服务器多 CPU 的处理能力，在老年代很大而且硬件比较高级的环境中，这种组合的吞吐量甚至还不一定有 ParNew 加 CMS 的组合“给力”。  </p>
+<p>在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器。Parallel Old 收集器的工作过程如下所示：  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-parallel-old.png">  </p>
+<h3 id="6-CMS-收集器"><a href="#6-CMS-收集器" class="headerlink" title="6. CMS 收集器"></a>6. CMS 收集器</h3><p>CMS（Concurrent Mark Sweep）收集器是一种以获取最短回收停顿时间为目标的收集器。目前很大一部分的 Java 应用集中在互联网站或者 B/S 系统的服务端上，这类应用尤其重视服务的响应速度，希望系统停顿时间最短，以给用户带来较好的体验。CMS 收集器就非常符合这类应用的需求。  </p>
+<p>CMS 收集器是基于“标记—清除”算法实现的，它的运作过程分为4个步骤，包括：  </p>
+<ol>
+<li>初始标记（CMS initial mark）</li>
+<li>并发标记（CMS concurrent mark）</li>
+<li>重新标记（CMS remark）</li>
+<li>并发清除（CMS concurrent sweep）  </li>
+</ol>
+<p>其中，初始标记、重新标记这两个步骤仍然需要“Stop The World”。初始标记仅仅只是标记一下 GC Roots 能直接关联到的对象，速度很快，并发标记阶段就是进行 GC RootsTracing 的过程，而重新标记阶段则是为了修正并发标记期间因用户程序继续运作而导致标记产生变动的那一部分对象的标记记录，这个阶段的停顿时间一般会比初始标记阶段稍长一些，但远比并发标记的时间短。由于整个过程中耗时最长的并发标记和并发清除过程收集器线程都可以与用户线程一起工作，所以，从总体上来说，CMS 收集器的内存回收过程是与用户线程一起并发执行的。通过下图可以比较清楚地看到 CMS 收集器的运作步骤中并发和需要停顿的时间。  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-cms.png">  </p>
+<p>CMS 是一款优秀的收集器，但是 CMS 还远达不到完美的程度，它有以下 3 个缺点：  </p>
+<ol>
+<li>CMS 收集器对 CPU 资源非常敏感。其实，面向并发设计的程序都对 CPU 资源比较敏感。在并发阶段，它虽然不会导致用户线程停顿，但是会因为占用了一部分线程（或者说 CPU 资源）而导致应用程序变慢，总吞吐量会降低。CMS 默认启动的回收线程数是（CPU 数量 + 3）/4，也就是当 CPU 在4个以上时，并发回收时垃圾收集线程不少于 25% 的 CPU 资源，并且随着 CPU 数量的增加而下降</li>
+<li>CMS 收集器无法处理浮动垃圾（Floating  Garbage），可能出现“Concurrent Mode Failure”失败而导致另一次 Full GC 的产生。由于 CMS 并发清理阶段用户线程还在运行着，伴随程序运行自然就还会有新的垃圾不断产生，这一部分垃圾出现在标记过程之后，CMS 无法在当次收集中处理掉它们，只好留待下一次 GC 时再清理掉。这一部分垃圾就称为“浮动垃圾”。也是由于在垃圾收集阶段用户线程还需要运行，那也就还需要预留有足够的内存空间给用户线程使用，因此 CMS 收集器不能像其他收集器那样等到老年代几乎完全被填满了再进行收集，需要预留一部分空间提供并发收集时的程序运作使用。在JDK  1.5 的默认设置下，CMS 收集器当老年代使用了 68% 的空间后就会被激活，这是一个偏保守的设置，如果在应用中老年代增长不是太快，可以适当调高参数 <code>-XX：CMSInitiatingOccupancyFraction</code> 的值来提高触发百分比，以便降低内存回收次数从而获取更好的性能，在JDK 1.6 中，CMS收集器的启动阈值已经提升至92%。要是CMS运行期间预留的内存无法满足程序需要，就会出现一次“Concurrent Mode Failure”失败，这时虚拟机将启动后备预案：临时启用 Serial Old 收集器来重新进行老年代的垃圾收集，这样停顿时间就很长了。所以说参数 <code>-XX：CMSInitiatingOccupancyFraction</code> 设置得太高很容易导致大量“Concurrent Mode Failure”失败，性能反而降低。</li>
+<li>CMS 是一款基于“标记—清除”算法实现的收集器，这意味着收集结束时会有大量空间碎片产生。空间碎片过多时，将会给大对象分配带来很大麻烦，往往会出现老年代还有很大空间剩余，但是无法找到足够大的连续空间来分配当前对象，不得不提前触发一次 Full GC。为了解决这个问题，CMS 收集器提供了一个 <code>-XX：+UseCMSCompactAtFullCollection</code> 开关参数（默认就是开启的），用于在CMS收集器顶不住要进行FullGC时开启内存碎片的合并整理过程，内存整理的过程是无法并发的，空间碎片问题没有了，但停顿时间不得不变长。虚拟机设计者还提供了另外一个参数 <code>-XX：CMSFullGCsBeforeCompaction</code> ，这个参数是用于设置执行多少次不压缩的 Full GC 后，跟着来一次带压缩的（默认值为 0，表示每次进入 Full GC 时都进行碎片整理）  </li>
+</ol>
+<h3 id="7-G1-收集器"><a href="#7-G1-收集器" class="headerlink" title="7. G1 收集器"></a>7. G1 收集器</h3><p>G1（Garbage-First）收集器在 JDK 7u4 开始正式商用，它是一款面向服务端应用的垃圾收集器。与其他 GC 收集器相比，G1 具备如下特点：  </p>
+<ol>
+<li>并行与并发：G1 能充分利用多 CPU、多核环境下的硬件优势，使用多个 CPU（CPU 或者CPU 核心）来缩短 Stop-The-World 停顿的时间，部分其他收集器原本需要停顿 Java 线程执行的GC 动作，G1 收集器仍然可以通过并发的方式让 Java 程序继续执行。</li>
+<li>分代收集：与其他收集器一样，分代概念在 G1 中依然得以保留。虽然 G1 可以不需要其他收集器配合就能独立管理整个 GC 堆，但它能够采用不同的方式去处理新创建的对象和已经存活了一段时间、熬过多次 GC 的旧对象以获取更好的收集效果。</li>
+<li>空间整合：与 CMS 的“标记—清理”算法不同，G1 从整体来看是基于“标记—整理”算法实现的收集器，从局部（两个 Region 之间）上来看是基于“复制”算法实现的，但无论如何，这两种算法都意味着 G1 运作期间不会产生内存空间碎片，收集后能提供规整的可用内存。这种特性有利于程序长时间运行，分配大对象时不会因为无法找到连续内存空间而提前触发下一次 GC。</li>
+<li>可预测的停顿：这是 G1 相对于 CMS 的另一大优势，降低停顿时间是 G1 和 CMS 共同的关注点，但 G1 除了追求低停顿外，还能建立可预测的停顿时间模型，能让使用者明确指定在一个长度为M毫秒的时间片段内，消耗在垃圾收集上的时间不得超过 N 毫秒，这几乎已经是实时 Java（RTSJ）的垃圾收集器的特征了。</li>
+</ol>
+<p>在 G1 之前的其他收集器进行收集的范围都是整个新生代或者老年代，而 G1 不再是这样。使用 G1 收集器时，Java 堆的内存布局就与其他收集器有很大差别，它将整个 Java 堆划分为多个大小相等的独立区域（Region），虽然还保留有新生代和老年代的概念，但新生代和老年代不再是物理隔离的了，它们都是一部分 Region（不需要连续）的集合。  </p>
+<p>G1 收集器之所以能建立可预测的停顿时间模型，是因为它可以有计划地避免在整个 Java 堆中进行全区域的垃圾收集。G1 跟踪各个 Region 里面的垃圾堆积的价值大小（回收所获得的空间大小以及回收所需时间的经验值），在后台维护一个优先列表，每次根据允许的收集时间，优先回收价值最大的 Region（这也就是 Garbage-First 名称的来由）。这种使用 Region 划分内存空间以及有优先级的区域回收方式，保证了 G1 收集器在有限的时间内可以获取尽可能高的收集效率。  </p>
+<p>在 G1 收集器中，Region 之间的对象引用以及其他收集器中的新生代与老年代之间的对象引用，虚拟机都是使用 Remembered Set 来避免全堆扫描的。G1 中每个 Region 都有一个与之对应的 Remembered Set，虚拟机发现程序在对 Reference 类型的数据进行写操作时，会产生一个Write Barrier 暂时中断写操作，检查 Reference 引用的对象是否处于不同的 Region 之中（在分代的例子中就是检查是否老年代中的对象引用了新生代中的对象），如果是，便通过 CardTable 把相关引用信息记录到被引用对象所属的 Region 的 Remembered Set 之中。当进行内存回收时，在 GC 根节点的枚举范围中加入 Remembered Set 即可保证不对全堆扫描也不会有遗漏。  </p>
+<p>如果不计算维护 Remembered Set 的操作，G1 收集器的运作大致可划分为以下几个步骤：  </p>
+<ol>
+<li>初始标记（Initial Marking）。该阶段仅仅只是标记一下 GC Roots 能直接关联到的对象，并且修改TAMS（Next Top at Mark Start）的值，让下一阶段用户程序并发运行时，能在正确可用的 Region 中创建新对象，这阶段需要停顿线程，但耗时很短。</li>
+<li>并发标记（Concurrent Marking）。该阶段是从 GC  Root 开始对堆中对象进行可达性分析，找出存活的对象，这阶段耗时较长，但可与用户程序并发执行。</li>
+<li>最终标记（Final Marking）。该阶段则是为了修正在并发标记期间因用户程序继续运作而导致标记产生变动的那一部分标记记录，虚拟机将这段时间对象变化记录在线程 Remembered Set Logs 里面。最终标记阶段需要把 Remembered Set Logs 的数据合并到 Remembered Set 中，这阶段需要停顿线程，但是可并行执行。</li>
+<li>筛选回收（Live Data Counting and Evacuation）。该阶段首先对各个 Region 的回收价值和成本进行排序，根据用户所期望的 GC 停顿时间来制定回收计划，这个阶段其实也可以做到与用户程序一起并发执行，但是因为只回收一部分 Region ，时间是用户可控制的，而且停顿用户线程将大幅提高收集效率。  </li>
+</ol>
+<p>通过下图可以比较清楚地看到 G1 收集器的运作步骤中并发和需要停顿的阶段。  </p>
+<p><img src="https://s.niuhp.com/blog/java/jvm/gc-collector-g1.png">  </p>
+<h3 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h3><p><strong>文章摘自《深入理解Java虚拟机》第二版 周志明著</strong>，仅作为学习记录，书籍中用到的案例代码及描述有部分修改，但未改变原意。</p>
+
+    </div>
+    <footer class="article-footer">
+      
+        <ul class="article-tags-list" itemprop="keywords"><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/GC/" rel="tag">GC</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/jvm/" rel="tag">jvm</a></li></ul>
+        <script type="text/javascript">
+          $(".article-tags-list").addClass("list-inline");
+          $(".article-tags-list-item").each(function(i,ele){
+            $(ele).addClass("list-inline-item");
+          });
+          $(".article-tags-list-link").each(function(i,ele){
+            $(ele).prepend('<i class="fa fa-tag"></i>');
+          });
+
+        </script>
+      
+    </footer>
+  </div>
+</article>
+
+
+<div id="cyReward" role="cylabs" class="text-center" data-use="reward" sid="java/jvm-gc-collector.html" cid="article"></div>
+<script type="text/javascript" charset="utf-8" src="https://changyan.itc.cn/js/lib/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="https://changyan.sohu.com/js/changyan.labs.https.js?appid=cysUwQohu"></script>
+
+
+<!--PC和WAP自适应版-->
+<div id="SOHUCS" sid="java/jvm-gc-collector.html" ></div>
+<script type="text/javascript">
+(function(){
+var appid = 'cysUwQohu';
+var conf = 'prod_5c110cd3d5c7d51e9e22d2d090da3623';
+var width = window.innerWidth || document.documentElement.clientWidth;
+if (width < 960) {
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("https://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+
+
+
+<nav class="nav nav-pills nav-justified nav-article-page ">
+  
+  <a href="/docker/install-docker-compose.html" class="nav-item">
+    <i class="fa fa-chevron-left float-left"></i>
+    <span class="article-nav-link-title">centos下安装docker-compose</span>
+  </a>
+  
+  
+  <a href="/java/jvm-gc-pg.html" class="nav-item">
+    <i class="fa fa-chevron-right float-right"></i>
+    <span class="article-nav-link-title">Java 垃圾回收 - 方法区回收</span>
+  </a>
+  
+</nav>
+
+
+
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":["weixin","sqq","tsina","twi","evernotecn","youdao","fbook","linkedin","qzone","tqq","douban","copy","mshare","print"],"bdPic":"","bdStyle":"0","bdSize":"16"},"slide":{"type":"slide","bdImg":"7","bdPos":"right","bdTop":"150.6500244140625"},"image":{"viewList":["qzone","tsina","tqq","renren","weixin"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+<link href="/css/article.css" rel="stylesheet">
+          </div>
+          <div class="col-3 theme-sidebar">
+              
+  <div class="sidebar-module sidebar-module-about">
+  
+  <div class="row">
+      <img class="mx-auto" src="https://s.niuhp.com/blog/theme/329620302.gif" />
+  </div>
+  
+  <h1>牛海朋</h1>
+  
+  <p>世界，你好！</p>
+  
+  <ul class="list-inline">
+    
+    <li class="list-inline-item">
+        <a href="https://github.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://weibo.com/u/2273910663" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+    <li class="list-inline-item">
+        <a id="widget_about_weixin_link" data-toggle="tooltip" data-html="true" data-placement="bottom" title="<img src='https://s.niuhp.com/blog/theme/weixin.png'/>">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weixin fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+        <script>
+            $('#widget_about_weixin_link').tooltip();
+        </script>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=329620302&site=qq&menu=yes">
+            <span class="fa-stack fa-lg" title="点击这里通过 QQ 联系我">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-qq fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://twitter.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+  </ul>
+</div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>分类</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hexo/">Hexo</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hystrix/">Hystrix</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Java/">Java</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Linux/">Linux</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/SpringCloud/">SpringCloud</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/docker/">docker</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/https/">https</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/k8s/">k8s</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/vpn/">vpn</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BB%84%E5%90%88%E6%95%B0%E5%AD%A6/">组合数学</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module sidebar-module-tag">
+    <h4>标签</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Bash/" rel="tag">Bash</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Centos/" rel="tag">Centos</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Checkbox/" rel="tag">Checkbox</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ConfigMap/" rel="tag">ConfigMap</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Eureka/" rel="tag">Eureka</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/GC/" rel="tag">GC</a><span class="sidebar-module-list-count">6</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Gitlab/" rel="tag">Gitlab</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Go/" rel="tag">Go</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hexo/" rel="tag">Hexo</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hystrix/" rel="tag">Hystrix</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Java/" rel="tag">Java</a><span class="sidebar-module-list-count">30</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Jquery/" rel="tag">Jquery</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pages/" rel="tag">Pages</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Theme/" rel="tag">Theme</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ccproxy/" rel="tag">ccproxy</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/centos/" rel="tag">centos</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/certbot/" rel="tag">certbot</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/cluster/" rel="tag">cluster</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker/" rel="tag">docker</a><span class="sidebar-module-list-count">9</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker-compose/" rel="tag">docker-compose</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/etcd/" rel="tag">etcd</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/https/" rel="tag">https</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/js/" rel="tag">js</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/jvm/" rel="tag">jvm</a><span class="sidebar-module-list-count">21</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/keepalived/" rel="tag">keepalived</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="sidebar-module-list-count">8</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubectl/" rel="tag">kubectl</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubernetes/" rel="tag">kubernetes</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/lets-encrypt/" rel="tag">lets-encrypt</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/master/" rel="tag">master</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/nginx/" rel="tag">nginx</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/oom/" rel="tag">oom</a><span class="sidebar-module-list-count">4</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/profile/" rel="tag">profile</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/timezone/" rel="tag">timezone</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/vpn/" rel="tag">vpn</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E4%BB%A3%E7%90%86/" rel="tag">代理</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%85%A8%E9%80%89/" rel="tag">全选</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag">博客</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" rel="tag">排列组合</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" rel="tag">流量复制</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag">测试</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%99%8D%E7%BA%A7/" rel="tag">降级</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%9A%94%E7%A6%BB/" rel="tag">隔离</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>标签云</h4>
+    <p class="tagcloud">
+      <a href="/tags/Bash/" style="font-size: 10px;">Bash</a> <a href="/tags/Centos/" style="font-size: 10px;">Centos</a> <a href="/tags/Checkbox/" style="font-size: 10px;">Checkbox</a> <a href="/tags/ConfigMap/" style="font-size: 10px;">ConfigMap</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Eureka/" style="font-size: 10px;">Eureka</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/Gitlab/" style="font-size: 10px;">Gitlab</a> <a href="/tags/Go/" style="font-size: 11px;">Go</a> <a href="/tags/Hexo/" style="font-size: 12px;">Hexo</a> <a href="/tags/Hystrix/" style="font-size: 11px;">Hystrix</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Jquery/" style="font-size: 10px;">Jquery</a> <a href="/tags/Linux/" style="font-size: 10px;">Linux</a> <a href="/tags/Pages/" style="font-size: 10px;">Pages</a> <a href="/tags/Spring/" style="font-size: 12px;">Spring</a> <a href="/tags/SpringBoot/" style="font-size: 12px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 12px;">SpringCloud</a> <a href="/tags/Theme/" style="font-size: 10px;">Theme</a> <a href="/tags/ccproxy/" style="font-size: 10px;">ccproxy</a> <a href="/tags/centos/" style="font-size: 16px;">centos</a> <a href="/tags/certbot/" style="font-size: 10px;">certbot</a> <a href="/tags/cluster/" style="font-size: 11px;">cluster</a> <a href="/tags/docker/" style="font-size: 18px;">docker</a> <a href="/tags/docker-compose/" style="font-size: 10px;">docker-compose</a> <a href="/tags/etcd/" style="font-size: 10px;">etcd</a> <a href="/tags/https/" style="font-size: 10px;">https</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/jvm/" style="font-size: 19px;">jvm</a> <a href="/tags/k8s/" style="font-size: 16px;">k8s</a> <a href="/tags/keepalived/" style="font-size: 10px;">keepalived</a> <a href="/tags/kubeadm/" style="font-size: 17px;">kubeadm</a> <a href="/tags/kubectl/" style="font-size: 14px;">kubectl</a> <a href="/tags/kubelet/" style="font-size: 11px;">kubelet</a> <a href="/tags/kubernetes/" style="font-size: 14px;">kubernetes</a> <a href="/tags/lets-encrypt/" style="font-size: 10px;">lets-encrypt</a> <a href="/tags/master/" style="font-size: 12px;">master</a> <a href="/tags/nginx/" style="font-size: 10px;">nginx</a> <a href="/tags/oom/" style="font-size: 13px;">oom</a> <a href="/tags/profile/" style="font-size: 10px;">profile</a> <a href="/tags/shadowsocks/" style="font-size: 10px;">shadowsocks</a> <a href="/tags/timezone/" style="font-size: 10px;">timezone</a> <a href="/tags/vpn/" style="font-size: 10px;">vpn</a> <a href="/tags/%E4%BB%A3%E7%90%86/" style="font-size: 10px;">代理</a> <a href="/tags/%E5%85%A8%E9%80%89/" style="font-size: 10px;">全选</a> <a href="/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 11px;">博客</a> <a href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" style="font-size: 11px;">排列组合</a> <a href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" style="font-size: 10px;">流量复制</a> <a href="/tags/%E6%B5%8B%E8%AF%95/" style="font-size: 10px;">测试</a> <a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 10px;">线程池</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11px;">设计模式</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 11px;">运维</a> <a href="/tags/%E9%99%8D%E7%BA%A7/" style="font-size: 10px;">降级</a> <a href="/tags/%E9%9A%94%E7%A6%BB/" style="font-size: 10px;">隔离</a>
+    </p>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>归档</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2021/03/">三月 2021</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>最新文章</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/other/https-certbot.html">使用 Let&#39;s Encrypt 让网站支持 https</a>
+        </li>
+      
+        <li>
+          <a href="/springcloud/03-eureka-server.html">Spring Cloud 构建微服务 03 — 搭建 eureka 服务注册中心</a>
+        </li>
+      
+        <li>
+          <a href="/linux/bash-profile.html">ssh 登录后不显示当前用户名的问题</a>
+        </li>
+      
+        <li>
+          <a href="/other/ccproxy.html">Centos7 使用 ccproxy 代理上网</a>
+        </li>
+      
+        <li>
+          <a href="/other/gitlab-move.html">Gitlab 迁移</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+
+          </div>
+      </div>
+  </div>
+  <footer class="footer navbar-fixed-bottom theme-footer row">
+  <nav class="container navbar navbar-expand-lg mx-auto row">
+    <div class="mx-auto">
+      <span class="theme-cpoy">&copy; </span>
+      <span class="theme-date">2021</span>
+      <span class="theme-author"> niuhp</span>
+      
+      <span class="theme-icp">京 ICP 备 15062857号-1</span>
+      
+      <span class="theme-hexo">Powered by <a href="//hexo.io/" target="_blank">Hexo</a></span>
+      <span class="theme-theme">Theme by <a href="https://github.com/niuhp/hexo-theme-art" target="_blank">hexo-theme-art</a></span>
+    </div>
+  </nav>
+</footer>
+
+</body>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
+</script>
+</html>

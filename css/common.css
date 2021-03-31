@@ -1,0 +1,339 @@
+/* layout style start */
+body {
+    font-size: 15px;
+    font-family: "Roboto", sans-serif ! important;
+    color: #666666;
+}
+
+a {
+    color: #326DE6;
+}
+
+img {
+    max-width: 99%;
+}
+
+table {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    background-color: #111;
+    color: #fff;
+    width: 100%;
+    max-width: 100%;
+}
+
+table tbody {
+    background-color: #333;
+}
+
+th, td {
+    border: 0.1em solid #dee2e6;
+    padding: 0.5em;
+}
+
+.theme-nav, .theme-footer {
+    background-color: #326DE6;
+}
+
+.theme-nav {
+    padding-left: 8em;
+}
+
+.theme-nav a, .theme-footer span {
+    color: #010101;
+}
+
+.theme-date, .theme-author, .theme-icp, .theme-hexo {
+    margin-right: 1.5em;
+}
+
+.theme-footer span a {
+    color: #a01015;
+}
+
+.theme-main {
+    max-width: 1500px;
+}
+
+/* layout style end */
+
+/* article,widget border style start */
+.article, .sidebar-module {
+    border: 1px solid lightgray;
+    box-shadow: 0 0 2px lightgray;
+    background: white;
+    color: #444;
+    padding: 3% 6%;
+    position: relative;
+    margin: 1em auto;
+}
+
+.article-date:before, .article-author:before, .article-category-link:before {
+    display: inline-block;
+    font-family: Microsoft YaHei, FontAwesome;
+    margin-right: 0.25em;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+
+.article-date:before {
+    content: "\f073";
+}
+
+.article-author:before {
+    content: "\f007";
+}
+
+.article-category-link:before {
+    content: "\f07b";
+}
+
+/* article,widget border style end */
+
+/* widget style start */
+.sidebar-module-about {
+    text-align: center;
+}
+
+.sidebar-module-about ul li a {
+    color: #333;
+}
+
+.sidebar-module-list-count {
+    padding-left: 5px;
+}
+
+.sidebar-module-list-count:before {
+    content: "(";
+}
+
+.sidebar-module-list-count:after {
+    content: ")";
+}
+
+#widget_about_weixin_img {
+    margin-top: 20px;
+}
+
+/* widget style end */
+
+/* pagination style start */
+#pagination-container .pagination .active > * {
+    background-color: #010101;
+    border-color: #010101;
+}
+
+/* pagination style end */
+
+.tooltip, .tooltip-inner {
+    background-color: #dee2e6;
+}
+.sidebar-module-about .list-inline .list-inline-item .fa-weibo {
+  color: #d44137;
+}
+.sidebar-module-about .list-inline .list-inline-item .fa-weixin {
+  color: #38ad5a;
+}
+.sidebar-module-about .list-inline .list-inline-item .fa-qq {
+  color: #39b2e2;
+}
+.sidebar-module-about .list-inline .list-inline-item .fa-twitter,
+.sidebar-module-about .list-inline .list-inline-item .fa-zhihu,
+.sidebar-module-about .list-inline .list-inline-item .fa-facebook,
+.sidebar-module-about .list-inline .list-inline-item .fa-linkedin {
+  color: #00aced;
+}
+pre,
+.highlight {
+  background: #272822;
+  padding: 15px 20px;
+  border-style: solid;
+  border-color: color-border;
+  border-width: 1px 0;
+  overflow: auto;
+  color: #f8f8f2;
+  line-height: 22.400000000000002px;
+}
+.highlight .gutter pre,
+.gist .gist-file .gist-data .line-numbers {
+  color: #666;
+  font-size: 0.85em;
+}
+code {
+  background-color: #e7efe9;
+  color: #4a127a;
+  font-family: "Roboto", sans-serif false;
+  font-size: 0.95em;
+  text-shadow: 0 1px #e7efe9;
+  padding: 0 0.3em;
+  border: 1px solid #e7efe9;
+  border-radius: 3px;
+}
+pre code {
+  border: none;
+  text-shadow: none;
+  background-color: #272822;
+}
+.highlight pre {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+.highlight table {
+  margin: 0;
+  width: auto;
+}
+.highlight td {
+  border: none;
+  padding: 0;
+}
+.highlight figcaption {
+  font-size: 0.85em;
+  color: #75715e;
+  line-height: 1em;
+  margin-bottom: 1em;
+}
+.highlight figcaption a {
+  float: right;
+}
+.highlight .gutter pre {
+  text-align: right;
+  padding-right: 20px;
+}
+.highlight .line {
+  height: 22.400000000000002px;
+}
+.gist {
+  margin: 0 -20px;
+  border-style: solid;
+  border-color: color-border;
+  border-width: 1px 0;
+  background: #272822;
+  padding: 15px 20px 15px 0;
+}
+.gist .gist-file {
+  border: none;
+  font-family: "Roboto", sans-serif false;
+  margin: 0;
+}
+.gist .gist-file .gist-data {
+  background: none;
+  border: none;
+}
+.gist .gist-file .gist-data .line-numbers {
+  background: none;
+  border: none;
+  padding: 0 20px 0 0;
+}
+.gist .gist-file .gist-data .line-data {
+  padding: 0 !important;
+}
+.gist .gist-file .highlight {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.gist .gist-file .gist-meta {
+  background: #272822;
+  color: #75715e;
+  font: 0.85em font-sans;
+  text-shadow: 0 0;
+  padding: 0;
+  margin-top: 1em;
+  margin-left: 20px;
+}
+.gist .gist-file .gist-meta a {
+  color: color-link;
+  font-weight: normal;
+}
+.gist .gist-file .gist-meta a:hover {
+  text-decoration: underline;
+}
+pre .comment,
+pre .preprocessor {
+  color: #75715e;
+}
+pre .tag {
+  color: #f8f8f2;
+}
+pre .title,
+pre .variable,
+pre .regexp,
+pre .ruby .constant,
+pre .xml .tag .title,
+pre .xml .pi,
+pre .xml .doctype,
+pre .html .doctype,
+pre .css .id,
+pre .css .class,
+pre .css .pseudo {
+  color: #f92672;
+}
+pre .number,
+pre .built_in,
+pre .literal,
+pre .constant {
+  color: #ae81ff;
+}
+pre .params {
+  color: #fd971f;
+}
+pre .class,
+pre .ruby .class .title,
+pre .css .rules .attribute,
+pre .attribute {
+  color: #a6e22e;
+}
+pre .string,
+pre .value,
+pre .inheritance,
+pre .header,
+pre .ruby .symbol,
+pre .xml .cdata {
+  color: #e6db74;
+}
+pre .css .hexcolor {
+  color: #a1efe4;
+}
+pre .function,
+pre .python .decorator,
+pre .python .title,
+pre .ruby .function .title,
+pre .ruby .title .keyword,
+pre .perl .sub,
+pre .javascript .title,
+pre .coffeescript .title {
+  color: #66d9ef;
+}
+pre .keyword,
+pre .javascript .function {
+  color: #66d9ef;
+}
+.yaml,
+.yaml .attr,
+.yaml .literal,
+.yaml .comment,
+.console {
+  background-color: #272822;
+  color: #f8f8f2;
+}
+.xml .code .line,
+.xml .line {
+  color: #66d9ef;
+}
+.xml .code .tag,
+.xml .tag,
+.xml .code .name,
+.xml .name {
+  color: #f92672;
+}
+.yaml .code .line .attr,
+.yaml .code .line .string {
+  color: #e6db74;
+}
+.yaml .literal {
+  color: #66d9ef;
+}
+.yaml .comment {
+  color: #a6e22e;
+}

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--css-->
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+<link rel="stylesheet" href="/css/common.css">
+
+
+    <!--js-->
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.slim.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+    
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?437810b3fbae9cd37993dfef1d0b24d3";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+  
+  <title>
+      Java 垃圾回收 - 方法区回收
+  </title>
+
+  
+    <link rel="icon" href="https://s.niuhp.com/blog/theme/329620302.gif">
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-expand-lg theme-nav">
+    
+        <a class="navbar-brand" href="/">首页</a>
+    
+        <a class="navbar-brand" href="/archives">归档</a>
+    
+</nav>
+
+
+  <div class="container theme-main">
+      <div class="row">
+          <div class="col-9 theme-content">
+              <article id="post-java/jvm-gc-pg" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+     <h1 class="font-weight-bold article-title">Java 垃圾回收 - 方法区回收</h1>
+  </header>
+
+  <div class="article-meta">
+    <span class="article-date">2021-03-31</span>
+    
+        <span class="article-author">niuhp</span>
+    
+    
+       <span class="article-category">
+       <a class="article-category-link" href="/categories/Java/">Java</a>
+       </span>
+    
+    
+<span title="评论数">
+    <a href="#SOHUCS">
+        <i class="fa fa-comment-o" aria-hidden="true"></i>
+        <span id = "changyan_count_unit">0</span>
+        <script id="cy_cmt_num" src="https://s.niuhp.com/blog/theme/changyan.plugins.count.js"></script>
+    </a>
+</span>
+
+    
+
+<img id="article-qr-icon" class="article-qr-icon" src="https://s.niuhp.com/blog/theme/qr-site.png" />
+<script src="https://s.niuhp.com/blog/theme/kjua.min.js"></script>
+
+<script>
+var qrImg = kjua({ecLevel: 'H',text:'https://www.niuhp.com/java/jvm-gc-pg.html'});
+var titleStr="<div class='article-qr-prompt'>扫一扫，直接在手机上打开</div><img class='article-qr-img' src='"+$(qrImg).attr('src')+"'/>";
+$("#article-qr-icon").tooltip({
+"html":true,
+"title":titleStr
+});
+</script>
+
+
+
+  </div>
+  <div class="article-inner">
+    <div class="article-entry" itemprop="articleBody">
+        <p>很多人认为方法区（或者 HotSpot 虚拟机中的永久代）是没有垃圾收集的，Java虚拟机规范中确实说过可以不要求虚拟机在方法区实现垃圾收集，而且在方法区中进行垃圾收集的“性价比”一般比较低：在堆中，尤其是在新生代中，常规应用进行一次垃圾收集一般可以回收 70%～95% 的空间，而永久代的垃圾收集效率远低于此。  </p>
+<span id="more"></span>  
+
+
+<p>永久代的垃圾收集主要回收两部分内容：  </p>
+<ol>
+<li>废弃常量</li>
+<li>无用的类</li>
+</ol>
+<p>回收废弃常量与回收 Java 堆中的对象非常类似。以常量池中字面量的回收为例，假如一个字符串 “abc” 已经进入了常量池中，但是当前系统没有任何一个 String 对象是叫做 “abc” 的，换句话说，就是没有任何 String 对象引用常量池中的 “abc” 常量，也没有其他地方引用了这个字面量，如果这时发生内存回收，而且必要的话，这个 “abc” 常量就会被系统清理出常量池。常量池中的其他类（接口）、方法、字段的符号引用也与此类似。  </p>
+<p>判定一个常量是否是“废弃常量”比较简单，而要判定一个类是否是“无用的类”的条件则相对苛刻许多。类需要同时满足下面 3 个条件才能算是“无用的类”：  </p>
+<ol>
+<li>该类所有的实例都已经被回收，也就是 Java 堆中不存在该类的任何实例。</li>
+<li>加载该类的 ClassLoader 已经被回收。</li>
+<li>该类对应的 <code>java.lang.Class</code> 对象没有在任何地方被引用，无法在任何地方通过反射访问该类的方法。  </li>
+</ol>
+<p>虚拟机可以对满足上述 3 个条件的无用类进行回收，这里说的仅仅是“可以”，而并不是和对象一样，不使用了就必然会回收。是否对类进行回收，HotSpot 虚拟机提供了 <code>-Xnoclassgc</code> 参数进行控制，还可以使用 <code>-verbose：class</code> 以及 <code>-XX：+TraceClassLoading</code>、<code>-XX：+TraceClassUnLoading</code> 查看类加载和卸载信息，其中 <code>-verbose：class</code> 和 <code>-XX：+TraceClassLoading</code> 可以在 Product 版的虚拟机中使用，<code>-XX：+TraceClassUnLoading</code> 参数需要 FastDebug 版的虚拟机支持。  </p>
+<p>在大量使用反射、动态代理、CGLib 等 ByteCode 框架、动态生成 JSP 以及 OSGi 这类频繁自定义 ClassLoader 的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。  </p>
+<p>我们可以通过 <code>java -help</code> 或者 <code>java -X</code> 查看当前虚拟机支持的选项：  </p>
+<pre><code class="console">[root@niuhp ~]# java -X
+    -Xmixed           mixed mode execution (default)
+    -Xint             interpreted mode execution only
+    -Xbootclasspath:&lt;directories and zip/jar files separated by :&gt;
+                      set search path for bootstrap classes and resources
+    -Xbootclasspath/a:&lt;directories and zip/jar files separated by :&gt;
+                      append to end of bootstrap class path
+    -Xbootclasspath/p:&lt;directories and zip/jar files separated by :&gt;
+                      prepend in front of bootstrap class path
+    -Xdiag            show additional diagnostic messages
+    -Xnoclassgc       disable class garbage collection
+    -Xincgc           enable incremental garbage collection
+    -Xloggc:&lt;file&gt;    log GC status to a file with time stamps
+    -Xbatch           disable background compilation
+    -Xms&lt;size&gt;        set initial Java heap size
+    -Xmx&lt;size&gt;        set maximum Java heap size
+    -Xss&lt;size&gt;        set java thread stack size
+    -Xprof            output cpu profiling data
+    -Xfuture          enable strictest checks, anticipating future default
+    -Xrs              reduce use of OS signals by Java/VM (see documentation)
+    -Xcheck:jni       perform additional checks for JNI functions
+    -Xshare:off       do not attempt to use shared class data
+    -Xshare:auto      use shared class data if possible (default)
+    -Xshare:on        require using shared class data, otherwise fail.
+    -XshowSettings    show all settings and continue
+    -XshowSettings:all
+                      show all settings and continue
+    -XshowSettings:vm show all vm related settings and continue
+    -XshowSettings:properties
+                      show all property settings and continue
+    -XshowSettings:locale
+                      show all locale related settings and continue
+
+The -X options are non-standard and subject to change without notice.
+</code></pre>
+<p>我们写段代码来验证 classgc 的情况：  </p>
+<p><a target="_blank" rel="noopener" href="https://github.com/niuhp/basic-java/blob/master/src/main/java/com/niuhp/basic/jvm/ClassGc.java"><code>ClassGc.java</code></a>  </p>
+<pre><code class="java">import java.io.File;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.HashSet;
+import java.util.Set;
+
+public class ClassGc &#123;
+  public static void main(String[] args) throws MalformedURLException &#123;
+    Set&lt;Class&lt;?&gt;&gt; classSet = new HashSet&lt;&gt;();
+    for (Integer i = 0; i &lt; 10000; i++) &#123;
+      URL url = new File(&quot;&quot;).toURI().toURL();
+      URL[] urls = new URL[]&#123;url&#125;;
+      ClassLoader loader = new URLClassLoader(urls);
+      InvocationHandler invocationHandler = (proxy, method, args1) -&gt; method.invoke(proxy, args1);
+      Object obj = Proxy.newProxyInstance(loader, BigObj.class.getInterfaces(), invocationHandler);
+      classSet.add(obj.getClass());
+    &#125;
+    classSet.clear();
+    System.out.println(&quot;---------- call gc start -------------&quot;);
+    System.gc();
+    System.out.println(&quot;---------- call gc end -------------&quot;);
+  &#125;
+&#125;
+</code></pre>
+<p>在上面代码中，我们构造 10000 个 ClassLoader ，并生产出 10000 个代理类，先使用 <code>java -XX:+PrintGC ClassGc</code> 运行：  </p>
+<pre><code class="console">[root@niuhp ~]# java -XX:+PrintGC ClassGc
+[GC (Allocation Failure)  64512K-&gt;8256K(245760K), 0.0093119 secs]
+[GC (Metadata GC Threshold)  44023K-&gt;12560K(245760K), 0.0167798 secs]
+[Full GC (Metadata GC Threshold)  12560K-&gt;12496K(190464K), 0.0374929 secs]
+[GC (Allocation Failure)  77008K-&gt;20656K(190464K), 0.0094743 secs]
+[GC (Metadata GC Threshold)  39634K-&gt;22808K(217088K), 0.0111336 secs]
+[Full GC (Metadata GC Threshold)  22808K-&gt;22688K(291840K), 0.0761930 secs]
+[GC (Allocation Failure)  113824K-&gt;34408K(291840K), 0.0133076 secs]
+[GC (Metadata GC Threshold)  79401K-&gt;39904K(321024K), 0.0176166 secs]
+[Full GC (Metadata GC Threshold)  39904K-&gt;39653K(411648K), 0.1793185 secs]
+---------- call gc start -------------
+[GC (System.gc())  71924K-&gt;43717K(414208K), 0.0063892 secs]
+[Full GC (System.gc())  43717K-&gt;3700K(414208K), 0.0637551 secs]
+---------- call gc end -------------
+</code></pre>
+<p>再使用 <code>java -XX:+PrintGC -Xnoclassgc ClassGc</code> 运行：  </p>
+<pre><code class="console">[root@niuhp ~]# java -XX:+PrintGC -Xnoclassgc ClassGc
+[GC (Allocation Failure)  64512K-&gt;8256K(245760K), 0.0320764 secs]
+[GC (Metadata GC Threshold)  44383K-&gt;12560K(310272K), 0.0215908 secs]
+[Full GC (Metadata GC Threshold)  12560K-&gt;12496K(250368K), 0.0512321 secs]
+[GC (Metadata GC Threshold)  96624K-&gt;22824K(250368K), 0.0142034 secs]
+[Full GC (Metadata GC Threshold)  22824K-&gt;22688K(323072K), 0.1055647 secs]
+[GC (Allocation Failure)  151712K-&gt;39184K(361472K), 0.0195401 secs]
+[GC (Metadata GC Threshold)  45755K-&gt;39920K(382464K), 0.0101625 secs]
+[Full GC (Metadata GC Threshold)  39920K-&gt;39653K(462848K), 0.2049295 secs]
+---------- call gc start -------------
+[GC (System.gc())  72918K-&gt;43685K(512512K), 0.0060701 secs]
+[Full GC (System.gc())  43685K-&gt;43309K(512512K), 0.2632258 secs]
+---------- call gc end -------------
+</code></pre>
+<p>看下最后的 GC 结果，在加入 <code>-Xnoclassgc</code> 后 GC 回收 <code>43685K-&gt;43309K</code> 的空间明显少于没有加入的情况 <code>43717K-&gt;3700K</code> ,这也说明了加入 <code>-Xnoclassgc</code> 后收集器不会对无用的类执行回收。  </p>
+<h3 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h3><p><strong>文章摘自《深入理解Java虚拟机》第二版 周志明著</strong>，仅作为学习记录，书籍中用到的案例代码及描述有部分修改，但未改变原意。</p>
+
+    </div>
+    <footer class="article-footer">
+      
+        <ul class="article-tags-list" itemprop="keywords"><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/GC/" rel="tag">GC</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/jvm/" rel="tag">jvm</a></li></ul>
+        <script type="text/javascript">
+          $(".article-tags-list").addClass("list-inline");
+          $(".article-tags-list-item").each(function(i,ele){
+            $(ele).addClass("list-inline-item");
+          });
+          $(".article-tags-list-link").each(function(i,ele){
+            $(ele).prepend('<i class="fa fa-tag"></i>');
+          });
+
+        </script>
+      
+    </footer>
+  </div>
+</article>
+
+
+<div id="cyReward" role="cylabs" class="text-center" data-use="reward" sid="java/jvm-gc-pg.html" cid="article"></div>
+<script type="text/javascript" charset="utf-8" src="https://changyan.itc.cn/js/lib/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="https://changyan.sohu.com/js/changyan.labs.https.js?appid=cysUwQohu"></script>
+
+
+<!--PC和WAP自适应版-->
+<div id="SOHUCS" sid="java/jvm-gc-pg.html" ></div>
+<script type="text/javascript">
+(function(){
+var appid = 'cysUwQohu';
+var conf = 'prod_5c110cd3d5c7d51e9e22d2d090da3623';
+var width = window.innerWidth || document.documentElement.clientWidth;
+if (width < 960) {
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("https://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+
+
+
+<nav class="nav nav-pills nav-justified nav-article-page ">
+  
+  <a href="/java/jvm-gc-collector.html" class="nav-item">
+    <i class="fa fa-chevron-left float-left"></i>
+    <span class="article-nav-link-title">Java 垃圾回收 - 垃圾收集器</span>
+  </a>
+  
+  
+  <a href="/java/jvm-gc-finalize.html" class="nav-item">
+    <i class="fa fa-chevron-right float-right"></i>
+    <span class="article-nav-link-title">Java 垃圾回收 - 使用 finalize 方法拯救自己</span>
+  </a>
+  
+</nav>
+
+
+
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":["weixin","sqq","tsina","twi","evernotecn","youdao","fbook","linkedin","qzone","tqq","douban","copy","mshare","print"],"bdPic":"","bdStyle":"0","bdSize":"16"},"slide":{"type":"slide","bdImg":"7","bdPos":"right","bdTop":"150.6500244140625"},"image":{"viewList":["qzone","tsina","tqq","renren","weixin"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+<link href="/css/article.css" rel="stylesheet">
+          </div>
+          <div class="col-3 theme-sidebar">
+              
+  <div class="sidebar-module sidebar-module-about">
+  
+  <div class="row">
+      <img class="mx-auto" src="https://s.niuhp.com/blog/theme/329620302.gif" />
+  </div>
+  
+  <h1>牛海朋</h1>
+  
+  <p>世界，你好！</p>
+  
+  <ul class="list-inline">
+    
+    <li class="list-inline-item">
+        <a href="https://github.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://weibo.com/u/2273910663" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+    <li class="list-inline-item">
+        <a id="widget_about_weixin_link" data-toggle="tooltip" data-html="true" data-placement="bottom" title="<img src='https://s.niuhp.com/blog/theme/weixin.png'/>">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weixin fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+        <script>
+            $('#widget_about_weixin_link').tooltip();
+        </script>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=329620302&site=qq&menu=yes">
+            <span class="fa-stack fa-lg" title="点击这里通过 QQ 联系我">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-qq fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://twitter.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+  </ul>
+</div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>分类</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hexo/">Hexo</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hystrix/">Hystrix</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Java/">Java</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Linux/">Linux</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/SpringCloud/">SpringCloud</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/docker/">docker</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/https/">https</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/k8s/">k8s</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/vpn/">vpn</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BB%84%E5%90%88%E6%95%B0%E5%AD%A6/">组合数学</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module sidebar-module-tag">
+    <h4>标签</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Bash/" rel="tag">Bash</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Centos/" rel="tag">Centos</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Checkbox/" rel="tag">Checkbox</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ConfigMap/" rel="tag">ConfigMap</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Eureka/" rel="tag">Eureka</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/GC/" rel="tag">GC</a><span class="sidebar-module-list-count">6</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Gitlab/" rel="tag">Gitlab</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Go/" rel="tag">Go</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hexo/" rel="tag">Hexo</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hystrix/" rel="tag">Hystrix</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Java/" rel="tag">Java</a><span class="sidebar-module-list-count">30</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Jquery/" rel="tag">Jquery</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pages/" rel="tag">Pages</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Theme/" rel="tag">Theme</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ccproxy/" rel="tag">ccproxy</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/centos/" rel="tag">centos</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/certbot/" rel="tag">certbot</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/cluster/" rel="tag">cluster</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker/" rel="tag">docker</a><span class="sidebar-module-list-count">9</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker-compose/" rel="tag">docker-compose</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/etcd/" rel="tag">etcd</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/https/" rel="tag">https</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/js/" rel="tag">js</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/jvm/" rel="tag">jvm</a><span class="sidebar-module-list-count">21</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/keepalived/" rel="tag">keepalived</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="sidebar-module-list-count">8</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubectl/" rel="tag">kubectl</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubernetes/" rel="tag">kubernetes</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/lets-encrypt/" rel="tag">lets-encrypt</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/master/" rel="tag">master</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/nginx/" rel="tag">nginx</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/oom/" rel="tag">oom</a><span class="sidebar-module-list-count">4</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/profile/" rel="tag">profile</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/timezone/" rel="tag">timezone</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/vpn/" rel="tag">vpn</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E4%BB%A3%E7%90%86/" rel="tag">代理</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%85%A8%E9%80%89/" rel="tag">全选</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag">博客</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" rel="tag">排列组合</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" rel="tag">流量复制</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag">测试</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%99%8D%E7%BA%A7/" rel="tag">降级</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%9A%94%E7%A6%BB/" rel="tag">隔离</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>标签云</h4>
+    <p class="tagcloud">
+      <a href="/tags/Bash/" style="font-size: 10px;">Bash</a> <a href="/tags/Centos/" style="font-size: 10px;">Centos</a> <a href="/tags/Checkbox/" style="font-size: 10px;">Checkbox</a> <a href="/tags/ConfigMap/" style="font-size: 10px;">ConfigMap</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Eureka/" style="font-size: 10px;">Eureka</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/Gitlab/" style="font-size: 10px;">Gitlab</a> <a href="/tags/Go/" style="font-size: 11px;">Go</a> <a href="/tags/Hexo/" style="font-size: 12px;">Hexo</a> <a href="/tags/Hystrix/" style="font-size: 11px;">Hystrix</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Jquery/" style="font-size: 10px;">Jquery</a> <a href="/tags/Linux/" style="font-size: 10px;">Linux</a> <a href="/tags/Pages/" style="font-size: 10px;">Pages</a> <a href="/tags/Spring/" style="font-size: 12px;">Spring</a> <a href="/tags/SpringBoot/" style="font-size: 12px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 12px;">SpringCloud</a> <a href="/tags/Theme/" style="font-size: 10px;">Theme</a> <a href="/tags/ccproxy/" style="font-size: 10px;">ccproxy</a> <a href="/tags/centos/" style="font-size: 16px;">centos</a> <a href="/tags/certbot/" style="font-size: 10px;">certbot</a> <a href="/tags/cluster/" style="font-size: 11px;">cluster</a> <a href="/tags/docker/" style="font-size: 18px;">docker</a> <a href="/tags/docker-compose/" style="font-size: 10px;">docker-compose</a> <a href="/tags/etcd/" style="font-size: 10px;">etcd</a> <a href="/tags/https/" style="font-size: 10px;">https</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/jvm/" style="font-size: 19px;">jvm</a> <a href="/tags/k8s/" style="font-size: 16px;">k8s</a> <a href="/tags/keepalived/" style="font-size: 10px;">keepalived</a> <a href="/tags/kubeadm/" style="font-size: 17px;">kubeadm</a> <a href="/tags/kubectl/" style="font-size: 14px;">kubectl</a> <a href="/tags/kubelet/" style="font-size: 11px;">kubelet</a> <a href="/tags/kubernetes/" style="font-size: 14px;">kubernetes</a> <a href="/tags/lets-encrypt/" style="font-size: 10px;">lets-encrypt</a> <a href="/tags/master/" style="font-size: 12px;">master</a> <a href="/tags/nginx/" style="font-size: 10px;">nginx</a> <a href="/tags/oom/" style="font-size: 13px;">oom</a> <a href="/tags/profile/" style="font-size: 10px;">profile</a> <a href="/tags/shadowsocks/" style="font-size: 10px;">shadowsocks</a> <a href="/tags/timezone/" style="font-size: 10px;">timezone</a> <a href="/tags/vpn/" style="font-size: 10px;">vpn</a> <a href="/tags/%E4%BB%A3%E7%90%86/" style="font-size: 10px;">代理</a> <a href="/tags/%E5%85%A8%E9%80%89/" style="font-size: 10px;">全选</a> <a href="/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 11px;">博客</a> <a href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" style="font-size: 11px;">排列组合</a> <a href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" style="font-size: 10px;">流量复制</a> <a href="/tags/%E6%B5%8B%E8%AF%95/" style="font-size: 10px;">测试</a> <a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 10px;">线程池</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11px;">设计模式</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 11px;">运维</a> <a href="/tags/%E9%99%8D%E7%BA%A7/" style="font-size: 10px;">降级</a> <a href="/tags/%E9%9A%94%E7%A6%BB/" style="font-size: 10px;">隔离</a>
+    </p>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>归档</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2021/03/">三月 2021</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>最新文章</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/other/https-certbot.html">使用 Let&#39;s Encrypt 让网站支持 https</a>
+        </li>
+      
+        <li>
+          <a href="/springcloud/03-eureka-server.html">Spring Cloud 构建微服务 03 — 搭建 eureka 服务注册中心</a>
+        </li>
+      
+        <li>
+          <a href="/linux/bash-profile.html">ssh 登录后不显示当前用户名的问题</a>
+        </li>
+      
+        <li>
+          <a href="/other/ccproxy.html">Centos7 使用 ccproxy 代理上网</a>
+        </li>
+      
+        <li>
+          <a href="/other/gitlab-move.html">Gitlab 迁移</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+
+          </div>
+      </div>
+  </div>
+  <footer class="footer navbar-fixed-bottom theme-footer row">
+  <nav class="container navbar navbar-expand-lg mx-auto row">
+    <div class="mx-auto">
+      <span class="theme-cpoy">&copy; </span>
+      <span class="theme-date">2021</span>
+      <span class="theme-author"> niuhp</span>
+      
+      <span class="theme-icp">京 ICP 备 15062857号-1</span>
+      
+      <span class="theme-hexo">Powered by <a href="//hexo.io/" target="_blank">Hexo</a></span>
+      <span class="theme-theme">Theme by <a href="https://github.com/niuhp/hexo-theme-art" target="_blank">hexo-theme-art</a></span>
+    </div>
+  </nav>
+</footer>
+
+</body>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
+</script>
+</html>

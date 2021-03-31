@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--css-->
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+<link rel="stylesheet" href="/css/common.css">
+
+
+    <!--js-->
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.slim.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+    
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?437810b3fbae9cd37993dfef1d0b24d3";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+  
+  <title>
+      centos7下安装kubectl
+  </title>
+
+  
+    <link rel="icon" href="https://s.niuhp.com/blog/theme/329620302.gif">
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-expand-lg theme-nav">
+    
+        <a class="navbar-brand" href="/">首页</a>
+    
+        <a class="navbar-brand" href="/archives">归档</a>
+    
+</nav>
+
+
+  <div class="container theme-main">
+      <div class="row">
+          <div class="col-9 theme-content">
+              <article id="post-docker/install-kubectl-on-centos7-64" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+     <h1 class="font-weight-bold article-title">centos7下安装kubectl</h1>
+  </header>
+
+  <div class="article-meta">
+    <span class="article-date">2021-03-31</span>
+    
+        <span class="article-author">niuhp</span>
+    
+    
+       <span class="article-category">
+       <a class="article-category-link" href="/categories/docker/">docker</a>
+       </span>
+    
+    
+<span title="评论数">
+    <a href="#SOHUCS">
+        <i class="fa fa-comment-o" aria-hidden="true"></i>
+        <span id = "changyan_count_unit">0</span>
+        <script id="cy_cmt_num" src="https://s.niuhp.com/blog/theme/changyan.plugins.count.js"></script>
+    </a>
+</span>
+
+    
+
+<img id="article-qr-icon" class="article-qr-icon" src="https://s.niuhp.com/blog/theme/qr-site.png" />
+<script src="https://s.niuhp.com/blog/theme/kjua.min.js"></script>
+
+<script>
+var qrImg = kjua({ecLevel: 'H',text:'https://www.niuhp.com/docker/install-kubectl-on-centos7-64.html'});
+var titleStr="<div class='article-qr-prompt'>扫一扫，直接在手机上打开</div><img class='article-qr-img' src='"+$(qrImg).attr('src')+"'/>";
+$("#article-qr-icon").tooltip({
+"html":true,
+"title":titleStr
+});
+</script>
+
+
+
+  </div>
+  <div class="article-inner">
+    <div class="article-entry" itemprop="articleBody">
+        <h3 id="1-下载最新release包"><a href="#1-下载最新release包" class="headerlink" title="1 下载最新release包"></a>1 下载最新release包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl</span><br></pre></td></tr></table></figure>
+<p>如果服务器没有外网，我们可以先把release包下载到本地，具体做法如下：  </p>
+<ul>
+<li>本地浏览器打开<a target="_blank" rel="noopener" href="https://storage.googleapis.com/kubernetes-release/release/stable.txt">https://storage.googleapis.com/kubernetes-release/release/stable.txt</a>得到最新版本为<strong>v1.7.1</strong></li>
+<li>用上一步得到的最新版本号<strong>v1.7.1</strong>替换下载地址中的$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)得到真正的下载地址<a target="_blank" rel="noopener" href="https://storage.googleapis.com/kubernetes-release/release/v1.7.1/bin/linux/amd64/kubectl">https://storage.googleapis.com/kubernetes-release/release/v1.7.1/bin/linux/amd64/kubectl</a></li>
+<li>将下载地址黏贴到本地浏览器下载，然后上传到服务器</li>
+</ul>
+<p>下载特定版本只需要将<strong>v1.7.1</strong>换成想要的版本即可，如<a target="_blank" rel="noopener" href="https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl">https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl</a></p>
+<h3 id="2-为kubectl增加可执行权限"><a href="#2-为kubectl增加可执行权限" class="headerlink" title="2 为kubectl增加可执行权限"></a>2 为kubectl增加可执行权限</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">chmod +x ./kubectl</span><br></pre></td></tr></table></figure>
+<h3 id="3-将kubectl移动到path目录"><a href="#3-将kubectl移动到path目录" class="headerlink" title="3 将kubectl移动到path目录"></a>3 将kubectl移动到path目录</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mv ./kubectl /usr/local/bin/kubectl</span><br></pre></td></tr></table></figure>
+<h3 id="4-验证kubectl配置"><a href="#4-验证kubectl配置" class="headerlink" title="4 验证kubectl配置"></a>4 验证kubectl配置</h3><p>我们可以通过获取集群状态来检查kubectl是否正确配置：  </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl cluster-info</span><br></pre></td></tr></table></figure>
+<p>如果你看到一个url的应答，说明kubectl已经正确配置了,如果看到类似下面的提示，说明kubectl尚未正确配置：  </p>
+<figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">The connection to the server &lt;server-name:port&gt; was refused - did you specify the right host or port?</span><br></pre></td></tr></table></figure>
+
+
+<p>参考：  </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">https://kubernetes.io/docs/tasks/tools/install-kubectl/</a></li>
+</ul>
+
+    </div>
+    <footer class="article-footer">
+      
+        <ul class="article-tags-list" itemprop="keywords"><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/centos/" rel="tag">centos</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/kubectl/" rel="tag">kubectl</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/kubernetes/" rel="tag">kubernetes</a></li></ul>
+        <script type="text/javascript">
+          $(".article-tags-list").addClass("list-inline");
+          $(".article-tags-list-item").each(function(i,ele){
+            $(ele).addClass("list-inline-item");
+          });
+          $(".article-tags-list-link").each(function(i,ele){
+            $(ele).prepend('<i class="fa fa-tag"></i>');
+          });
+
+        </script>
+      
+    </footer>
+  </div>
+</article>
+
+
+<div id="cyReward" role="cylabs" class="text-center" data-use="reward" sid="docker/install-kubectl-on-centos7-64.html" cid="article"></div>
+<script type="text/javascript" charset="utf-8" src="https://changyan.itc.cn/js/lib/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="https://changyan.sohu.com/js/changyan.labs.https.js?appid=cysUwQohu"></script>
+
+
+<!--PC和WAP自适应版-->
+<div id="SOHUCS" sid="docker/install-kubectl-on-centos7-64.html" ></div>
+<script type="text/javascript">
+(function(){
+var appid = 'cysUwQohu';
+var conf = 'prod_5c110cd3d5c7d51e9e22d2d090da3623';
+var width = window.innerWidth || document.documentElement.clientWidth;
+if (width < 960) {
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("https://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+
+
+
+<nav class="nav nav-pills nav-justified nav-article-page ">
+  
+  <a href="/docker/install-kubelet_kubeadm-on-centos7-64.html" class="nav-item">
+    <i class="fa fa-chevron-left float-left"></i>
+    <span class="article-nav-link-title">centos7下安装kubelet和kubeadm</span>
+  </a>
+  
+  
+  <a href="/docker/install-docker-compose.html" class="nav-item">
+    <i class="fa fa-chevron-right float-right"></i>
+    <span class="article-nav-link-title">centos下安装docker-compose</span>
+  </a>
+  
+</nav>
+
+
+
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":["weixin","sqq","tsina","twi","evernotecn","youdao","fbook","linkedin","qzone","tqq","douban","copy","mshare","print"],"bdPic":"","bdStyle":"0","bdSize":"16"},"slide":{"type":"slide","bdImg":"7","bdPos":"right","bdTop":"150.6500244140625"},"image":{"viewList":["qzone","tsina","tqq","renren","weixin"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+<link href="/css/article.css" rel="stylesheet">
+          </div>
+          <div class="col-3 theme-sidebar">
+              
+  <div class="sidebar-module sidebar-module-about">
+  
+  <div class="row">
+      <img class="mx-auto" src="https://s.niuhp.com/blog/theme/329620302.gif" />
+  </div>
+  
+  <h1>牛海朋</h1>
+  
+  <p>世界，你好！</p>
+  
+  <ul class="list-inline">
+    
+    <li class="list-inline-item">
+        <a href="https://github.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://weibo.com/u/2273910663" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+    <li class="list-inline-item">
+        <a id="widget_about_weixin_link" data-toggle="tooltip" data-html="true" data-placement="bottom" title="<img src='https://s.niuhp.com/blog/theme/weixin.png'/>">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weixin fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+        <script>
+            $('#widget_about_weixin_link').tooltip();
+        </script>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=329620302&site=qq&menu=yes">
+            <span class="fa-stack fa-lg" title="点击这里通过 QQ 联系我">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-qq fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://twitter.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+  </ul>
+</div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>分类</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hexo/">Hexo</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hystrix/">Hystrix</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Java/">Java</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Linux/">Linux</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/SpringCloud/">SpringCloud</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/docker/">docker</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/https/">https</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/k8s/">k8s</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/vpn/">vpn</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BB%84%E5%90%88%E6%95%B0%E5%AD%A6/">组合数学</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module sidebar-module-tag">
+    <h4>标签</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Bash/" rel="tag">Bash</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Centos/" rel="tag">Centos</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Checkbox/" rel="tag">Checkbox</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ConfigMap/" rel="tag">ConfigMap</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Eureka/" rel="tag">Eureka</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/GC/" rel="tag">GC</a><span class="sidebar-module-list-count">6</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Gitlab/" rel="tag">Gitlab</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Go/" rel="tag">Go</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hexo/" rel="tag">Hexo</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hystrix/" rel="tag">Hystrix</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Java/" rel="tag">Java</a><span class="sidebar-module-list-count">30</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Jquery/" rel="tag">Jquery</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pages/" rel="tag">Pages</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Theme/" rel="tag">Theme</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ccproxy/" rel="tag">ccproxy</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/centos/" rel="tag">centos</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/certbot/" rel="tag">certbot</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/cluster/" rel="tag">cluster</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker/" rel="tag">docker</a><span class="sidebar-module-list-count">9</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker-compose/" rel="tag">docker-compose</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/etcd/" rel="tag">etcd</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/https/" rel="tag">https</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/js/" rel="tag">js</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/jvm/" rel="tag">jvm</a><span class="sidebar-module-list-count">21</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/keepalived/" rel="tag">keepalived</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="sidebar-module-list-count">8</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubectl/" rel="tag">kubectl</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubernetes/" rel="tag">kubernetes</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/lets-encrypt/" rel="tag">lets-encrypt</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/master/" rel="tag">master</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/nginx/" rel="tag">nginx</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/oom/" rel="tag">oom</a><span class="sidebar-module-list-count">4</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/profile/" rel="tag">profile</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/timezone/" rel="tag">timezone</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/vpn/" rel="tag">vpn</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E4%BB%A3%E7%90%86/" rel="tag">代理</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%85%A8%E9%80%89/" rel="tag">全选</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag">博客</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" rel="tag">排列组合</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" rel="tag">流量复制</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag">测试</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%99%8D%E7%BA%A7/" rel="tag">降级</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%9A%94%E7%A6%BB/" rel="tag">隔离</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>标签云</h4>
+    <p class="tagcloud">
+      <a href="/tags/Bash/" style="font-size: 10px;">Bash</a> <a href="/tags/Centos/" style="font-size: 10px;">Centos</a> <a href="/tags/Checkbox/" style="font-size: 10px;">Checkbox</a> <a href="/tags/ConfigMap/" style="font-size: 10px;">ConfigMap</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Eureka/" style="font-size: 10px;">Eureka</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/Gitlab/" style="font-size: 10px;">Gitlab</a> <a href="/tags/Go/" style="font-size: 11px;">Go</a> <a href="/tags/Hexo/" style="font-size: 12px;">Hexo</a> <a href="/tags/Hystrix/" style="font-size: 11px;">Hystrix</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Jquery/" style="font-size: 10px;">Jquery</a> <a href="/tags/Linux/" style="font-size: 10px;">Linux</a> <a href="/tags/Pages/" style="font-size: 10px;">Pages</a> <a href="/tags/Spring/" style="font-size: 12px;">Spring</a> <a href="/tags/SpringBoot/" style="font-size: 12px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 12px;">SpringCloud</a> <a href="/tags/Theme/" style="font-size: 10px;">Theme</a> <a href="/tags/ccproxy/" style="font-size: 10px;">ccproxy</a> <a href="/tags/centos/" style="font-size: 16px;">centos</a> <a href="/tags/certbot/" style="font-size: 10px;">certbot</a> <a href="/tags/cluster/" style="font-size: 11px;">cluster</a> <a href="/tags/docker/" style="font-size: 18px;">docker</a> <a href="/tags/docker-compose/" style="font-size: 10px;">docker-compose</a> <a href="/tags/etcd/" style="font-size: 10px;">etcd</a> <a href="/tags/https/" style="font-size: 10px;">https</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/jvm/" style="font-size: 19px;">jvm</a> <a href="/tags/k8s/" style="font-size: 16px;">k8s</a> <a href="/tags/keepalived/" style="font-size: 10px;">keepalived</a> <a href="/tags/kubeadm/" style="font-size: 17px;">kubeadm</a> <a href="/tags/kubectl/" style="font-size: 14px;">kubectl</a> <a href="/tags/kubelet/" style="font-size: 11px;">kubelet</a> <a href="/tags/kubernetes/" style="font-size: 14px;">kubernetes</a> <a href="/tags/lets-encrypt/" style="font-size: 10px;">lets-encrypt</a> <a href="/tags/master/" style="font-size: 12px;">master</a> <a href="/tags/nginx/" style="font-size: 10px;">nginx</a> <a href="/tags/oom/" style="font-size: 13px;">oom</a> <a href="/tags/profile/" style="font-size: 10px;">profile</a> <a href="/tags/shadowsocks/" style="font-size: 10px;">shadowsocks</a> <a href="/tags/timezone/" style="font-size: 10px;">timezone</a> <a href="/tags/vpn/" style="font-size: 10px;">vpn</a> <a href="/tags/%E4%BB%A3%E7%90%86/" style="font-size: 10px;">代理</a> <a href="/tags/%E5%85%A8%E9%80%89/" style="font-size: 10px;">全选</a> <a href="/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 11px;">博客</a> <a href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" style="font-size: 11px;">排列组合</a> <a href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" style="font-size: 10px;">流量复制</a> <a href="/tags/%E6%B5%8B%E8%AF%95/" style="font-size: 10px;">测试</a> <a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 10px;">线程池</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11px;">设计模式</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 11px;">运维</a> <a href="/tags/%E9%99%8D%E7%BA%A7/" style="font-size: 10px;">降级</a> <a href="/tags/%E9%9A%94%E7%A6%BB/" style="font-size: 10px;">隔离</a>
+    </p>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>归档</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2021/03/">三月 2021</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>最新文章</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/other/https-certbot.html">使用 Let&#39;s Encrypt 让网站支持 https</a>
+        </li>
+      
+        <li>
+          <a href="/springcloud/03-eureka-server.html">Spring Cloud 构建微服务 03 — 搭建 eureka 服务注册中心</a>
+        </li>
+      
+        <li>
+          <a href="/linux/bash-profile.html">ssh 登录后不显示当前用户名的问题</a>
+        </li>
+      
+        <li>
+          <a href="/other/ccproxy.html">Centos7 使用 ccproxy 代理上网</a>
+        </li>
+      
+        <li>
+          <a href="/other/gitlab-move.html">Gitlab 迁移</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+
+          </div>
+      </div>
+  </div>
+  <footer class="footer navbar-fixed-bottom theme-footer row">
+  <nav class="container navbar navbar-expand-lg mx-auto row">
+    <div class="mx-auto">
+      <span class="theme-cpoy">&copy; </span>
+      <span class="theme-date">2021</span>
+      <span class="theme-author"> niuhp</span>
+      
+      <span class="theme-icp">京 ICP 备 15062857号-1</span>
+      
+      <span class="theme-hexo">Powered by <a href="//hexo.io/" target="_blank">Hexo</a></span>
+      <span class="theme-theme">Theme by <a href="https://github.com/niuhp/hexo-theme-art" target="_blank">hexo-theme-art</a></span>
+    </div>
+  </nav>
+</footer>
+
+</body>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
+</script>
+</html>

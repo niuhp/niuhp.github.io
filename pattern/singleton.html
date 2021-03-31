@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--css-->
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+<link rel="stylesheet" href="/css/common.css">
+
+
+    <!--js-->
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.slim.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.0/js/bootstrap.bundle.min.js"></script>
+    
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?437810b3fbae9cd37993dfef1d0b24d3";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+
+  
+  <title>
+      Java 设计模式 - 单例
+  </title>
+
+  
+    <link rel="icon" href="https://s.niuhp.com/blog/theme/329620302.gif">
+  
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <nav class="navbar navbar-expand-lg theme-nav">
+    
+        <a class="navbar-brand" href="/">首页</a>
+    
+        <a class="navbar-brand" href="/archives">归档</a>
+    
+</nav>
+
+
+  <div class="container theme-main">
+      <div class="row">
+          <div class="col-9 theme-content">
+              <article id="post-pattern/singleton" class="article article-type-post" itemscope itemprop="blogPost">
+
+  <header class="article-header">
+     <h1 class="font-weight-bold article-title">Java 设计模式 - 单例</h1>
+  </header>
+
+  <div class="article-meta">
+    <span class="article-date">2021-03-31</span>
+    
+        <span class="article-author">niuhp</span>
+    
+    
+       <span class="article-category">
+       <a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+       </span>
+    
+    
+<span title="评论数">
+    <a href="#SOHUCS">
+        <i class="fa fa-comment-o" aria-hidden="true"></i>
+        <span id = "changyan_count_unit">0</span>
+        <script id="cy_cmt_num" src="https://s.niuhp.com/blog/theme/changyan.plugins.count.js"></script>
+    </a>
+</span>
+
+    
+
+<img id="article-qr-icon" class="article-qr-icon" src="https://s.niuhp.com/blog/theme/qr-site.png" />
+<script src="https://s.niuhp.com/blog/theme/kjua.min.js"></script>
+
+<script>
+var qrImg = kjua({ecLevel: 'H',text:'https://www.niuhp.com/pattern/singleton.html'});
+var titleStr="<div class='article-qr-prompt'>扫一扫，直接在手机上打开</div><img class='article-qr-img' src='"+$(qrImg).attr('src')+"'/>";
+$("#article-qr-icon").tooltip({
+"html":true,
+"title":titleStr
+});
+</script>
+
+
+
+  </div>
+  <div class="article-inner">
+    <div class="article-entry" itemprop="articleBody">
+        <p>顾名思义，<strong>单例</strong>就是程序内部只有一个实例。java 单例包含 2 个要点：  </p>
+<ol>
+<li>构造方法私有。只能自己创建实例</li>
+<li>公开静态访问方法。既然别人不能创建实例了，那么要获取实例，就得提供一个公开的静态方法了  </li>
+</ol>
+<span id="more"></span>
+
+<h3 id="常用写法"><a href="#常用写法" class="headerlink" title="常用写法"></a>常用写法</h3><h4 id="1-饿汉式"><a href="#1-饿汉式" class="headerlink" title="1 饿汉式"></a>1 饿汉式</h4><pre><code class="java">public class SingletonA &#123;
+
+  private static SingletonA instance = new SingletonA();
+
+  private SingletonA() &#123;
+  &#125;
+
+  public static SingletonA getInstance() &#123;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+<p>这种方式在类装载的时候就初始化了实例，所以是线程安全的。  </p>
+<h4 id="2-懒汉式"><a href="#2-懒汉式" class="headerlink" title="2 懒汉式"></a>2 懒汉式</h4><pre><code class="java">public class SingletonB &#123;
+
+  private static SingletonB instance = null;
+
+  private SingletonB() &#123;
+  &#125;
+
+  public static SingletonB getInstance() &#123;
+    if (instance == null) &#123;
+      instance = new SingletonB();
+    &#125;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+<p>这种方式在第一次访问 <em>getInstance()</em> 方法时才初始化实例，所以可以达到懒加载的效果，但是在高并发的情况下，多个线程有可能同时判断到 <code>instance == null</code> 为 <strong>true</strong> ，导致实例被初始化多次。为了实现线程安全，我们很容易想到给程序加锁，于是有个下面两种写法：  </p>
+<ol>
+<li><p>方法上加锁  </p>
+<pre><code class="java">public class SingletonC &#123;
+
+  private static volatile SingletonC instance = null;
+
+  private SingletonC() &#123;
+  &#125;
+
+  public static synchronized SingletonC getInstance() &#123;
+    if (instance == null) &#123;
+      instance = new SingletonC();
+    &#125;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+</li>
+<li><p>代码块加锁  </p>
+<pre><code class="java">public class SingletonD &#123;
+
+  private static volatile SingletonD instance = null;
+  private static final Object lockObj = new Object();
+
+  private SingletonD() &#123;
+  &#125;
+
+  public static SingletonD getInstance() &#123;
+    synchronized (lockObj) &#123;
+      if (instance == null) &#123;
+        instance = new SingletonD();
+      &#125;
+    &#125;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+</li>
+</ol>
+<p><strong>方法上加锁</strong>和<strong>代码块加锁</strong>的方式都能实现线程安全，但每次访问都需要上锁，高并发情况下势必会影响程序性能，因此我们有了下面的改良版的加锁方式，即<strong>双重检查锁</strong>的实现：  </p>
+<pre><code class="java">public class SingletonE &#123;
+
+  private static volatile SingletonE instance = null;
+  private static final Object lockObj = new Object();
+
+  private SingletonE() &#123;
+  &#125;
+
+  public static SingletonE getInstance() &#123;
+    if (instance == null) &#123;
+      synchronized (lockObj) &#123;
+        if (instance == null) &#123;
+          instance = new SingletonE();
+        &#125;
+      &#125;
+    &#125;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+<p>这种方式在初始化代码上加了 <em>synchronized</em> 同步锁，保证了高并发情况下只有一个线程执行了初始化操作，实现了线程安全，另外在初始化完成后，外层的 <code>instance == null</code> 将返回 <strong>false</strong> ，程序不会再次进入同步代码块，解决了访问性能问题。  </p>
+<h4 id="3-静态内部类"><a href="#3-静态内部类" class="headerlink" title="3 静态内部类"></a>3 静态内部类</h4><pre><code class="java">public class SingletonF &#123;
+
+  private SingletonF() &#123;
+  &#125;
+
+  private static class SingletonHolder &#123;
+
+    static final SingletonF instance = new SingletonF();
+  &#125;
+
+  public static SingletonF getInstance() &#123;
+    return SingletonHolder.instance;
+  &#125;
+&#125;
+</code></pre>
+<p>这种方式由 jvm 保证了单例的线程安全，在 <em>getInstance()</em> 第一次被调用时，内部类 <em>SingletonHolder</em> 被装载，装载过程中会初始化它的静态域，从而 <em>SingletonF</em> 被实例化，这种写法利用了 jvm 及内部类的特性实现了一个线程安全的单例模式，不需要加锁，同时也保证了性能，懒加载的情况个人推荐这种写法。  </p>
+<h4 id="4-枚举"><a href="#4-枚举" class="headerlink" title="4 枚举"></a>4 枚举</h4><pre><code class="java">public enum SingletonG &#123;
+
+  instance;
+
+  public static SingletonG getInstance() &#123;
+    return instance;
+  &#125;
+&#125;
+</code></pre>
+<p>通过 <em>getInstance()</em> 或者直接使用枚举 <em>SingletonG.instance</em> 来获取实例，枚举同样是在类装载时就初始化了，所以不是懒加载，也不存在线程安全问题。  </p>
+<h4 id="5-线程内单例"><a href="#5-线程内单例" class="headerlink" title="5 线程内单例"></a>5 线程内单例</h4><pre><code class="java">public class SingletonH &#123;
+
+  private static ThreadLocal&lt;SingletonH&gt; instanceLocal = new ThreadLocal&lt;SingletonH&gt;();
+
+  private int status;
+
+  private SingletonH() &#123;
+    status = (int) (Math.random() * 100);
+  &#125;
+
+  public static SingletonH getInstance() &#123;
+    SingletonH instance = instanceLocal.get();
+    if (instance == null) &#123;
+      instance = new SingletonH();
+      instanceLocal.set(instance);
+    &#125;
+    return instance;
+  &#125;
+
+  public int getStatus() &#123;
+    return status;
+  &#125;
+&#125;
+</code></pre>
+<p>这种方式可以保证 <em>SingletonH</em> 在每个线程内部是单例的，下面我们写段测试代码来验证下：  </p>
+<pre><code class="java">  @Test
+  public void testSingleton() &#123;
+    ExecutorService pool = Executors.newFixedThreadPool(5);
+    for (int i = 0; i &lt; 100; i++) &#123;
+      pool.submit(new Runnable() &#123;
+        @Override
+        public void run() &#123;
+          long id = Thread.currentThread().getId();
+          String name = Thread.currentThread().getName();
+          SingletonH instance = SingletonH.getInstance();
+          int status = instance.getStatus();
+          System.out.println(String.format(&quot;thread[id=%s,name=%s],instance.status=%s&quot;, id, name, status));
+        &#125;
+      &#125;);
+      if (i % 5 == 0) &#123;
+        try &#123;
+          Thread.sleep(1000);
+        &#125; catch (InterruptedException e) &#123;
+          e.printStackTrace();
+        &#125;
+      &#125;
+    &#125;
+  &#125;
+&#125;
+</code></pre>
+<p>在测试代码中创建一个5个线程数的线程池并向线程池提交 100 个任务，在任务内部打印线程号和 <em>SingletonH</em> 实例，通过控制台输出我们可以看出 <em>instance.ststus</em> 在每个线程内都是相等的。  </p>
+<p><img src="https://s.niuhp.com/blog/pattern/singleton/h.png">  </p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>单例的写法有很多种，但大致都有上面几种方法衍变而来，应该使用哪种方式，要看具体的应用场景，就个人喜好而言，不需要懒加载的情况使用 <em>SingletonA</em> 饿汉式的写法，需要懒加载的情况使用 <em>SingletonF</em> 静态内部类的写法。  </p>
+<ul>
+<li>源码：<a target="_blank" rel="noopener" href="https://github.com/niuhp/basic-java/tree/master/src/main/java/com/niuhp/basic/pattern/singleton">https://github.com/niuhp/basic-java/tree/master/src/main/java/com/niuhp/basic/pattern/singleton</a>  </li>
+<li>测试：<a target="_blank" rel="noopener" href="https://github.com/niuhp/basic-java/tree/master/src/test/java/com/niuhp/basic/pattern/singleton">https://github.com/niuhp/basic-java/tree/master/src/test/java/com/niuhp/basic/pattern/singleton</a>  </li>
+</ul>
+
+    </div>
+    <footer class="article-footer">
+      
+        <ul class="article-tags-list" itemprop="keywords"><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/Java/" rel="tag">Java</a></li><li class="article-tags-list-item"><a class="article-tags-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+        <script type="text/javascript">
+          $(".article-tags-list").addClass("list-inline");
+          $(".article-tags-list-item").each(function(i,ele){
+            $(ele).addClass("list-inline-item");
+          });
+          $(".article-tags-list-link").each(function(i,ele){
+            $(ele).prepend('<i class="fa fa-tag"></i>');
+          });
+
+        </script>
+      
+    </footer>
+  </div>
+</article>
+
+
+<div id="cyReward" role="cylabs" class="text-center" data-use="reward" sid="pattern/singleton.html" cid="article"></div>
+<script type="text/javascript" charset="utf-8" src="https://changyan.itc.cn/js/lib/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="https://changyan.sohu.com/js/changyan.labs.https.js?appid=cysUwQohu"></script>
+
+
+<!--PC和WAP自适应版-->
+<div id="SOHUCS" sid="pattern/singleton.html" ></div>
+<script type="text/javascript">
+(function(){
+var appid = 'cysUwQohu';
+var conf = 'prod_5c110cd3d5c7d51e9e22d2d090da3623';
+var width = window.innerWidth || document.documentElement.clientWidth;
+if (width < 960) {
+window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("https://changyan.sohu.com/upload/changyan.js",function(){window.changyan.api.config({appid:appid,conf:conf})}); } })(); </script>
+
+
+
+<nav class="nav nav-pills nav-justified nav-article-page ">
+  
+  <a href="/permutation/dict.html" class="nav-item">
+    <i class="fa fa-chevron-left float-left"></i>
+    <span class="article-nav-link-title">排列组合算法 - 字典序法</span>
+  </a>
+  
+  
+  <a href="/pattern/factory.html" class="nav-item">
+    <i class="fa fa-chevron-right float-right"></i>
+    <span class="article-nav-link-title">Java 设计模式 - 工厂</span>
+  </a>
+  
+</nav>
+
+
+
+<script>
+window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":["weixin","sqq","tsina","twi","evernotecn","youdao","fbook","linkedin","qzone","tqq","douban","copy","mshare","print"],"bdPic":"","bdStyle":"0","bdSize":"16"},"slide":{"type":"slide","bdImg":"7","bdPos":"right","bdTop":"150.6500244140625"},"image":{"viewList":["qzone","tsina","tqq","renren","weixin"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+<link href="/css/article.css" rel="stylesheet">
+          </div>
+          <div class="col-3 theme-sidebar">
+              
+  <div class="sidebar-module sidebar-module-about">
+  
+  <div class="row">
+      <img class="mx-auto" src="https://s.niuhp.com/blog/theme/329620302.gif" />
+  </div>
+  
+  <h1>牛海朋</h1>
+  
+  <p>世界，你好！</p>
+  
+  <ul class="list-inline">
+    
+    <li class="list-inline-item">
+        <a href="https://github.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://weibo.com/u/2273910663" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+    <li class="list-inline-item">
+        <a id="widget_about_weixin_link" data-toggle="tooltip" data-html="true" data-placement="bottom" title="<img src='https://s.niuhp.com/blog/theme/weixin.png'/>">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-weixin fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+        <script>
+            $('#widget_about_weixin_link').tooltip();
+        </script>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=329620302&site=qq&menu=yes">
+            <span class="fa-stack fa-lg" title="点击这里通过 QQ 联系我">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-qq fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    <li class="list-inline-item">
+        <a href="https://twitter.com/niuhp" target="_blank">
+            <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+            </span>
+        </a>
+    </li>
+    
+    
+    
+  </ul>
+</div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>分类</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hexo/">Hexo</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Hystrix/">Hystrix</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Java/">Java</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/Linux/">Linux</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/SpringCloud/">SpringCloud</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/docker/">docker</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/https/">https</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/k8s/">k8s</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/vpn/">vpn</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E5%89%8D%E7%AB%AF/">前端</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BB%84%E5%90%88%E6%95%B0%E5%AD%A6/">组合数学</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/categories/%E8%BF%90%E7%BB%B4/">运维</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module sidebar-module-tag">
+    <h4>标签</h4>
+    <ul class="sidebar-module-list" itemprop="keywords"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Bash/" rel="tag">Bash</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Centos/" rel="tag">Centos</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Checkbox/" rel="tag">Checkbox</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ConfigMap/" rel="tag">ConfigMap</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Eureka/" rel="tag">Eureka</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/GC/" rel="tag">GC</a><span class="sidebar-module-list-count">6</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Gitlab/" rel="tag">Gitlab</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Go/" rel="tag">Go</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hexo/" rel="tag">Hexo</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Hystrix/" rel="tag">Hystrix</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Java/" rel="tag">Java</a><span class="sidebar-module-list-count">30</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Jquery/" rel="tag">Jquery</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Pages/" rel="tag">Pages</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringBoot/" rel="tag">SpringBoot</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/SpringCloud/" rel="tag">SpringCloud</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/Theme/" rel="tag">Theme</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/ccproxy/" rel="tag">ccproxy</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/centos/" rel="tag">centos</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/certbot/" rel="tag">certbot</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/cluster/" rel="tag">cluster</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker/" rel="tag">docker</a><span class="sidebar-module-list-count">9</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/docker-compose/" rel="tag">docker-compose</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/etcd/" rel="tag">etcd</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/https/" rel="tag">https</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/js/" rel="tag">js</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/jvm/" rel="tag">jvm</a><span class="sidebar-module-list-count">21</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="sidebar-module-list-count">7</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/keepalived/" rel="tag">keepalived</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubeadm/" rel="tag">kubeadm</a><span class="sidebar-module-list-count">8</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubectl/" rel="tag">kubectl</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubelet/" rel="tag">kubelet</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/kubernetes/" rel="tag">kubernetes</a><span class="sidebar-module-list-count">5</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/lets-encrypt/" rel="tag">lets-encrypt</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/master/" rel="tag">master</a><span class="sidebar-module-list-count">3</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/nginx/" rel="tag">nginx</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/oom/" rel="tag">oom</a><span class="sidebar-module-list-count">4</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/profile/" rel="tag">profile</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/timezone/" rel="tag">timezone</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/vpn/" rel="tag">vpn</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E4%BB%A3%E7%90%86/" rel="tag">代理</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%85%A8%E9%80%89/" rel="tag">全选</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag">博客</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" rel="tag">排列组合</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" rel="tag">流量复制</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag">测试</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" rel="tag">线程池</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag">网络</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag">运维</a><span class="sidebar-module-list-count">2</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%99%8D%E7%BA%A7/" rel="tag">降级</a><span class="sidebar-module-list-count">1</span></li><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/tags/%E9%9A%94%E7%A6%BB/" rel="tag">隔离</a><span class="sidebar-module-list-count">1</span></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>标签云</h4>
+    <p class="tagcloud">
+      <a href="/tags/Bash/" style="font-size: 10px;">Bash</a> <a href="/tags/Centos/" style="font-size: 10px;">Centos</a> <a href="/tags/Checkbox/" style="font-size: 10px;">Checkbox</a> <a href="/tags/ConfigMap/" style="font-size: 10px;">ConfigMap</a> <a href="/tags/Docker/" style="font-size: 10px;">Docker</a> <a href="/tags/Eureka/" style="font-size: 10px;">Eureka</a> <a href="/tags/GC/" style="font-size: 15px;">GC</a> <a href="/tags/Gitlab/" style="font-size: 10px;">Gitlab</a> <a href="/tags/Go/" style="font-size: 11px;">Go</a> <a href="/tags/Hexo/" style="font-size: 12px;">Hexo</a> <a href="/tags/Hystrix/" style="font-size: 11px;">Hystrix</a> <a href="/tags/Java/" style="font-size: 20px;">Java</a> <a href="/tags/Jquery/" style="font-size: 10px;">Jquery</a> <a href="/tags/Linux/" style="font-size: 10px;">Linux</a> <a href="/tags/Pages/" style="font-size: 10px;">Pages</a> <a href="/tags/Spring/" style="font-size: 12px;">Spring</a> <a href="/tags/SpringBoot/" style="font-size: 12px;">SpringBoot</a> <a href="/tags/SpringCloud/" style="font-size: 12px;">SpringCloud</a> <a href="/tags/Theme/" style="font-size: 10px;">Theme</a> <a href="/tags/ccproxy/" style="font-size: 10px;">ccproxy</a> <a href="/tags/centos/" style="font-size: 16px;">centos</a> <a href="/tags/certbot/" style="font-size: 10px;">certbot</a> <a href="/tags/cluster/" style="font-size: 11px;">cluster</a> <a href="/tags/docker/" style="font-size: 18px;">docker</a> <a href="/tags/docker-compose/" style="font-size: 10px;">docker-compose</a> <a href="/tags/etcd/" style="font-size: 10px;">etcd</a> <a href="/tags/https/" style="font-size: 10px;">https</a> <a href="/tags/js/" style="font-size: 10px;">js</a> <a href="/tags/jvm/" style="font-size: 19px;">jvm</a> <a href="/tags/k8s/" style="font-size: 16px;">k8s</a> <a href="/tags/keepalived/" style="font-size: 10px;">keepalived</a> <a href="/tags/kubeadm/" style="font-size: 17px;">kubeadm</a> <a href="/tags/kubectl/" style="font-size: 14px;">kubectl</a> <a href="/tags/kubelet/" style="font-size: 11px;">kubelet</a> <a href="/tags/kubernetes/" style="font-size: 14px;">kubernetes</a> <a href="/tags/lets-encrypt/" style="font-size: 10px;">lets-encrypt</a> <a href="/tags/master/" style="font-size: 12px;">master</a> <a href="/tags/nginx/" style="font-size: 10px;">nginx</a> <a href="/tags/oom/" style="font-size: 13px;">oom</a> <a href="/tags/profile/" style="font-size: 10px;">profile</a> <a href="/tags/shadowsocks/" style="font-size: 10px;">shadowsocks</a> <a href="/tags/timezone/" style="font-size: 10px;">timezone</a> <a href="/tags/vpn/" style="font-size: 10px;">vpn</a> <a href="/tags/%E4%BB%A3%E7%90%86/" style="font-size: 10px;">代理</a> <a href="/tags/%E5%85%A8%E9%80%89/" style="font-size: 10px;">全选</a> <a href="/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 11px;">博客</a> <a href="/tags/%E6%8E%92%E5%88%97%E7%BB%84%E5%90%88/" style="font-size: 11px;">排列组合</a> <a href="/tags/%E6%B5%81%E9%87%8F%E5%A4%8D%E5%88%B6/" style="font-size: 10px;">流量复制</a> <a href="/tags/%E6%B5%8B%E8%AF%95/" style="font-size: 10px;">测试</a> <a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 10px;">线程池</a> <a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 10px;">网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 11px;">设计模式</a> <a href="/tags/%E8%BF%90%E7%BB%B4/" style="font-size: 11px;">运维</a> <a href="/tags/%E9%99%8D%E7%BA%A7/" style="font-size: 10px;">降级</a> <a href="/tags/%E9%9A%94%E7%A6%BB/" style="font-size: 10px;">隔离</a>
+    </p>
+  </div>
+
+
+  
+  <div class="sidebar-module">
+    <h4>归档</h4>
+    <ul class="sidebar-module-list"><li class="sidebar-module-list-item"><a class="sidebar-module-list-link" href="/archives/2021/03/">三月 2021</a></li></ul>
+  </div>
+
+
+
+  
+  <div class="sidebar-module">
+    <h4>最新文章</h4>
+    <ul class="sidebar-module-list">
+      
+        <li>
+          <a href="/other/https-certbot.html">使用 Let&#39;s Encrypt 让网站支持 https</a>
+        </li>
+      
+        <li>
+          <a href="/springcloud/03-eureka-server.html">Spring Cloud 构建微服务 03 — 搭建 eureka 服务注册中心</a>
+        </li>
+      
+        <li>
+          <a href="/linux/bash-profile.html">ssh 登录后不显示当前用户名的问题</a>
+        </li>
+      
+        <li>
+          <a href="/other/ccproxy.html">Centos7 使用 ccproxy 代理上网</a>
+        </li>
+      
+        <li>
+          <a href="/other/gitlab-move.html">Gitlab 迁移</a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+
+          </div>
+      </div>
+  </div>
+  <footer class="footer navbar-fixed-bottom theme-footer row">
+  <nav class="container navbar navbar-expand-lg mx-auto row">
+    <div class="mx-auto">
+      <span class="theme-cpoy">&copy; </span>
+      <span class="theme-date">2021</span>
+      <span class="theme-author"> niuhp</span>
+      
+      <span class="theme-icp">京 ICP 备 15062857号-1</span>
+      
+      <span class="theme-hexo">Powered by <a href="//hexo.io/" target="_blank">Hexo</a></span>
+      <span class="theme-theme">Theme by <a href="https://github.com/niuhp/hexo-theme-art" target="_blank">hexo-theme-art</a></span>
+    </div>
+  </nav>
+</footer>
+
+</body>
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
+</script>
+</html>
